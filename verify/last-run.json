@@ -1,5 +1,5 @@
 {
-  "when": "2026-08-18T22:28:59.496Z",
+  "when": "2026-08-18T22:36:00.451Z",
   "results": [
     {
       "metric": "headless render frames",
@@ -34,7 +34,7 @@
     {
       "metric": "JS bundle gz",
       "target": "≤ 900 kB",
-      "measured": "282 kB",
+      "measured": "283 kB",
       "pass": true
     },
     {
@@ -52,7 +52,7 @@
     {
       "metric": "pick -> panel populated",
       "target": "≤ 120 ms",
-      "measured": "1.3 ms",
+      "measured": "1.2 ms",
       "pass": true
     },
     {
@@ -89,6 +89,24 @@
       "metric": "deep-zoom label coverage (1.25)",
       "target": "≥ 80% of in-view territories",
       "measured": "82/102",
+      "pass": true
+    },
+    {
+      "metric": "frame p95, 10s orbit, desktop",
+      "target": "≤ 21.5 ms (vsync-relative) at ≥ 57 fps",
+      "measured": "18.1 ms @ 60.1 fps",
+      "pass": true
+    },
+    {
+      "metric": "frame p95, mobile profile (4x throttle)",
+      "target": "≤ 33 ms",
+      "measured": "18.6 ms (601 frames)",
+      "pass": true
+    },
+    {
+      "metric": "time to interactive globe (Fast 3G)",
+      "target": "≤ 4000 ms",
+      "measured": "2750 ms",
       "pass": true
     },
     {

@@ -54,8 +54,18 @@ const reliefMaterial = (map: THREE.Texture) => new THREE.ShaderMaterial({
   `,
 });
 
+// Performance-sweep escape hatch: ?merge=group&count=N drives the strategy
+// grid in verify; production always runs the default per-family merge.
+const SWEEP = new URLSearchParams(window.location.search);
+const MERGE_STRATEGY = SWEEP.get("merge") === "group" ? "group" as const : "family" as const;
+const GROUP_COUNT = Number(SWEEP.get("count")) || Infinity;
+
 function useFamilyData(peoples: PeopleFeature[] | null): FamilyMeshData[] {
-  return useMemo(() => (peoples ? buildFamilyMeshes(peoples) : []), [peoples]);
+  return useMemo(() => {
+    if (!peoples) return [];
+    const slice = Number.isFinite(GROUP_COUNT) ? peoples.slice(0, GROUP_COUNT) : peoples;
+    return buildFamilyMeshes(slice, { strategy: MERGE_STRATEGY });
+  }, [peoples]);
 }
 
 export function GlobeScene() {
@@ -84,7 +94,16 @@ export function GlobeScene() {
     return attachPicking(gl.domElement, camera, groupRef.current, familyData);
   }, [gl, camera, familyData]);
 
-  useFrame(() => { frameCounter.current.count++; frameCounter.current.last = performance.now(); });
+  const profile = useRef<{ on: boolean; last: number; deltas: number[] }>({ on: false, last: 0, deltas: [] });
+
+  useFrame(() => {
+    frameCounter.current.count++;
+    const now = performance.now();
+    if (profile.current.on) {
+      if (frameCounter.current.last > 0) profile.current.deltas.push(now - frameCounter.current.last);
+    }
+    frameCounter.current.last = now;
+  });
 
   // Move the camera programmatically without damping fighting the jump.
   const syncCamera = (pos: THREE.Vector3) => {
@@ -147,6 +166,17 @@ export function GlobeScene() {
       getLayer: () => useApp.getState().layer,
       setYear: (y) => useApp.getState().setYear(y),
       frameStats: () => ({ ...frameCounter.current }),
+      profileStart: () => { profile.current.deltas = []; profile.current.on = true; },
+      profileEnd: () => {
+        profile.current.on = false;
+        const d = [...profile.current.deltas].sort((a, b) => a - b);
+        const frames = d.length;
+        return {
+          frames,
+          meanMs: frames ? d.reduce((a, b) => a + b, 0) / frames : 0,
+          p95Ms: frames ? d[Math.min(frames - 1, Math.floor(frames * 0.95))] : 0,
+        };
+      },
       select: (id) => useApp.getState().select(id),
       panelState: () => {
         const s = useApp.getState();
@@ -178,9 +208,9 @@ export function GlobeScene() {
 
       {/* Family ink washes + outlines */}
       <group ref={groupRef}>
-        {familyData.map(fd => (
+        {familyData.map((fd, i) => (
           <mesh
-            key={fd.family}
+            key={`${fd.family}-${i}`}
             geometry={fd.geometry}
             userData={{ family: fd.family, layer: "peoples" }}
             visible={peoplesVisible}

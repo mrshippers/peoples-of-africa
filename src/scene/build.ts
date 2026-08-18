@@ -72,24 +72,28 @@ function polygonsOf(f: PeopleFeature): number[][][][] {
     : (f.geometry.coordinates as number[][][][]);
 }
 
-// Build one merged non-indexed geometry per family. Each group's triangles are
-// contiguous, so a face index maps to a group by range lookup and a highlight
-// can be drawn with setDrawRange over the same buffers.
+// Build merged non-indexed geometry. Strategy "family" (default) merges each
+// family into one mesh with contiguous per-group triangle ranges - a face
+// index maps to a group by range lookup and a highlight can be drawn with
+// setDrawRange over the same buffers. Strategy "group" (for the performance
+// sweep only) emits one mesh per group.
 export function buildFamilyMeshes(
   features: PeopleFeature[],
-  opts: { altitude?: number; maxEdgeDeg?: number } = {},
+  opts: { altitude?: number; maxEdgeDeg?: number; strategy?: "family" | "group" } = {},
 ): FamilyMeshData[] {
   const altitude = opts.altitude ?? LAYER_ALTITUDE;
   const maxEdge = opts.maxEdgeDeg ?? 3;
-  const byFamily = new Map<FamilyName, PeopleFeature[]>();
+  const byFamily = new Map<FamilyName | string, PeopleFeature[]>();
   for (const f of features) {
-    const fam = f.properties.family;
-    if (!byFamily.has(fam)) byFamily.set(fam, []);
-    byFamily.get(fam)!.push(f);
+    const key = opts.strategy === "group" ? f.properties.id : f.properties.family;
+    if (!byFamily.has(key)) byFamily.set(key, []);
+    byFamily.get(key)!.push(f);
   }
 
   const result: FamilyMeshData[] = [];
-  for (const [family, feats] of byFamily) {
+  for (const [key, feats] of byFamily) {
+    const family = (opts.strategy === "group" ? feats[0].properties.family : key) as FamilyName;
+    void key;
     const positions: number[] = [];
     const ranges: GroupRange[] = [];
     for (const f of feats) {
