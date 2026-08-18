@@ -18,6 +18,7 @@ export interface PoaTestApi {
   audit(): SceneAudit;
   pickAt(ndcX: number, ndcY: number): PickResult | null;
   setZoom(distance: number): { distance: number; polar: number };
+  lookAt(lat: number, lon: number): void;
   zoomLimits(): { min: number; max: number };
   cameraSane(): boolean;
   setLayer(layer: "peoples" | "heritage" | "overlay"): void;

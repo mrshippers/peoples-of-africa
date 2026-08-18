@@ -1,5 +1,5 @@
 {
-  "when": "2026-08-18T22:08:38.168Z",
+  "when": "2026-08-18T22:11:08.455Z",
   "results": [
     {
       "metric": "headless render frames",
@@ -41,6 +41,18 @@
       "metric": "data payload",
       "target": "≤ 2.5 MB",
       "measured": "0.90 MB",
+      "pass": true
+    },
+    {
+      "metric": "pick accuracy at 10 known coordinates",
+      "target": "10/10",
+      "measured": "10/10",
+      "pass": true
+    },
+    {
+      "metric": "pick -> panel populated",
+      "target": "≤ 120 ms",
+      "measured": "2.2 ms",
       "pass": true
     },
     {

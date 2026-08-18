@@ -86,6 +86,20 @@ export function GlobeScene() {
 
   useFrame(() => { frameCounter.current.count++; frameCounter.current.last = performance.now(); });
 
+  // Move the camera programmatically without damping fighting the jump.
+  const syncCamera = (pos: THREE.Vector3) => {
+    const c = controlsRef.current;
+    camera.position.copy(pos);
+    camera.lookAt(0, 0, 0);
+    if (c) {
+      const damped = c.enableDamping;
+      c.enableDamping = false;
+      c.update();
+      c.enableDamping = damped;
+    }
+    camera.updateMatrixWorld(true);
+  };
+
   // Test API: everything the verify harness drives directly.
   useEffect(() => {
     registerTestApi({
@@ -110,12 +124,13 @@ export function GlobeScene() {
         };
       },
       setZoom: (distance: number) => {
-        const c = controlsRef.current!;
         const dir = camera.position.clone().normalize();
-        camera.position.copy(dir.multiplyScalar(distance));
-        c.update();
+        syncCamera(dir.multiplyScalar(distance));
         const sph = new THREE.Spherical().setFromVector3(camera.position);
         return { distance: camera.position.length(), polar: sph.phi };
+      },
+      lookAt: (lat: number, lon: number) => {
+        syncCamera(latLonToVec3(lat, lon, camera.position.length()));
       },
       zoomLimits: () => ({ min: ZOOM_MIN, max: ZOOM_MAX }),
       cameraSane: () => {

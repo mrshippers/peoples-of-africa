@@ -95,6 +95,67 @@ try {
   record("JS bundle gz", "≤ 900 kB", `${(jsBytes / 1e3).toFixed(0)} kB`, jsBytes <= 900_000);
   record("data payload", "≤ 2.5 MB", `${(dataBytes / 1e6).toFixed(2)} MB`, dataBytes <= 2_500_000);
 
+  // ── system 3: pick accuracy at 10 known targets ──
+  // Candidates: groups whose recorded centre lies inside their own outer ring,
+  // spread across the continent. Camera faces each centre; the pick at screen
+  // centre must resolve to that group.
+  const targets = await page.evaluate(() => {
+    const inside = (pt, ring) => {
+      let c = false;
+      for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const [xi, yi] = ring[i], [xj, yj] = ring[j];
+        if (((yi > pt[1]) !== (yj > pt[1])) &&
+            pt[0] < ((xj - xi) * (pt[1] - yi)) / (yj - yi) + xi) c = !c;
+      }
+      return c;
+    };
+    return fetch("/data/peoples.geojson").then(r => r.json()).then(fc => {
+      const ok = fc.features.filter(f => {
+        const p = f.properties;
+        if (typeof p.lat !== "number" || typeof p.lon !== "number") return false;
+        const rings = f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates;
+        return rings.some(poly => inside([p.lon, p.lat], poly[0]));
+      });
+      // Spread: sort by lon+lat hash, take every Nth for geographic variety.
+      ok.sort((a, b) => (a.properties.lon + a.properties.lat * 7) - (b.properties.lon + b.properties.lat * 7));
+      const step = Math.floor(ok.length / 10);
+      return Array.from({ length: 10 }, (_, i) => {
+        const p = ok[i * step].properties;
+        return { id: p.id, name: p.name, lat: p.lat, lon: p.lon };
+      });
+    });
+  });
+  let pickHits = 0;
+  const pickMisses = [];
+  for (const t of targets) {
+    const got = await page.evaluate(({ lat, lon }) => {
+      window.__poa.lookAt(lat, lon);
+      return window.__poa.pickAt(0, 0);
+    }, t);
+    if (got?.id === t.id) pickHits++;
+    else pickMisses.push(`${t.name} -> ${got?.name ?? "nothing"}`);
+  }
+  record("pick accuracy at 10 known coordinates", "10/10", `${pickHits}/10`, pickHits === 10);
+  if (pickMisses.length) console.log("  misses:", pickMisses.join("; "));
+
+  // panel populate latency: select via API, measure store-reported populate time
+  const panelMs = await page.evaluate(async (id) => {
+    window.__poa.select(null);
+    await new Promise(r => setTimeout(r, 50));
+    window.__poa.select(id);
+    for (let i = 0; i < 40; i++) {
+      const st = window.__poa.panelState();
+      if (st.populatedInMs != null) return st.populatedInMs;
+      await new Promise(r => setTimeout(r, 25));
+    }
+    return null;
+  }, targets[0].id);
+  record("pick -> panel populated", "≤ 120 ms",
+    panelMs == null ? "never" : `${panelMs.toFixed(1)} ms`,
+    panelMs != null && panelMs <= 120);
+  await page.evaluate(() => { window.__poa.select(null); window.__poa.setZoom(2.35); });
+  await page.evaluate(() => window.__poa.lookAt(2, 17));
+
   // ── design-gate screenshots ──
   await page.screenshot({ path: path.join(SHOTS, "zoom-continent.png") });
   await page.evaluate(() => window.__poa.setZoom(1.6));
