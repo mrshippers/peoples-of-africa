@@ -10,6 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
 import { chromium } from "playwright";
+import { AxeBuilder } from "@axe-core/playwright";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SHOTS = path.join(ROOT, "verify", "screenshots");
@@ -58,7 +59,8 @@ try {
   });
 
   browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  const mainContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await mainContext.newPage();
   await page.goto("http://localhost:4517/");
   await page.waitForFunction(() => window.__poa?.ready === true, null, { timeout: 30000 });
   // Let the drape settle a couple of frames.
@@ -373,6 +375,28 @@ try {
     const tti = Date.now() - t0;
     record("time to interactive globe (Fast 3G)", "≤ 4000 ms", `${tti} ms`, tti <= 4000);
     await ctx.close();
+  }
+
+  // ── axe scan: peoples at rest, panel open, heritage with scrubber ──
+  {
+    const seriousOf = (r) => r.violations.filter(v => v.impact === "serious" || v.impact === "critical");
+    const states = [];
+    states.push({ name: "peoples", violations: seriousOf(await new AxeBuilder({ page }).analyze()) });
+    const pickForAxe = await page.evaluate(() => window.__poa.pickAt(0, 0));
+    if (pickForAxe) {
+      await page.evaluate(id => window.__poa.select(id), pickForAxe.id);
+      await page.waitForTimeout(300);
+      states.push({ name: "panel-open", violations: seriousOf(await new AxeBuilder({ page }).analyze()) });
+      await page.evaluate(() => window.__poa.select(null));
+    }
+    await page.evaluate(() => window.__poa.setLayer("heritage"));
+    await page.waitForTimeout(300);
+    states.push({ name: "heritage", violations: seriousOf(await new AxeBuilder({ page }).analyze()) });
+    await page.evaluate(() => window.__poa.setLayer("peoples"));
+    const total = states.reduce((s, st) => s + st.violations.length, 0);
+    for (const st of states)
+      for (const v of st.violations) console.log(`  axe [${st.name}] ${v.id}: ${v.help}`);
+    record("serious axe violations (3 states)", "0", total, total === 0);
   }
 
   // ── design-gate screenshots ──

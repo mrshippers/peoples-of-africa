@@ -71,7 +71,12 @@ export function LabelLayer() {
   const relayout = () => {
     const svg = svgRef.current;
     if (!svg) return;
-    const { placed, candidates } = layoutLabels(activeSpecs(), camera, size.width, size.height, params.current);
+    // Heritage sub-labels are the polity dates - worth showing at smaller type
+    // than the peoples' language micro-labels.
+    const effParams = layer === "peoples"
+      ? params.current
+      : { ...params.current, subMinFontPx: 12 };
+    const { placed, candidates } = layoutLabels(activeSpecs(), camera, size.width, size.height, effParams);
     lastPlaced.current = placed;
     lastCandidates.current = candidates;
     svg.setAttribute("viewBox", `0 0 ${size.width} ${size.height}`);
