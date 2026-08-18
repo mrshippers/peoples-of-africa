@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check:data": "node scripts/check-data.mjs",
+    "build:data": "node scripts/build-peoples.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^9.122.0",
