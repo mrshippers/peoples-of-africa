@@ -248,6 +248,8 @@ for (const f of murdock.features) {
   const code = (p.CODE || "").trim();
   const name = (p.NAME || "").trim();
   if (!name || !f.geometry) { stats.noCode++; continue; }
+  // Desert voids are cartographic honesty, not peoples - leave them as bare relief.
+  if (name.toUpperCase().startsWith("UNINHABITED")) { stats.uninhabited = (stats.uninhabited ?? 0) + 1; continue; }
 
   let family = null, glottocode = null, langName = null;
   const override = NAME_OVERRIDES.get(name.toUpperCase());

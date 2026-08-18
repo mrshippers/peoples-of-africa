@@ -1,111 +1,113 @@
+/* Museum-dark surround; the lit globe is the page's only light source.
+   No pills anywhere: interactive corners stay ≤2px. */
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
-
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  --ground: #0a0a0c;
+  --ink: #d8d2c4;
+  --ink-dim: #8a857a;
+  --ink-faint: #55524b;
+  --hairline: rgba(216, 210, 196, 0.16);
+  --card-ground: rgba(14, 14, 17, 0.94);
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --mono: "SF Mono", ui-monospace, Menlo, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
+html, body, #root { height: 100%; }
 
 body {
-  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--serif);
+  overflow: hidden;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+.app { position: relative; width: 100vw; height: 100vh; }
+
+.globe-canvas { position: absolute !important; inset: 0; }
+
+/* ── Masthead ── */
+.masthead {
+  position: absolute; top: 28px; left: 32px; pointer-events: none;
+}
+.masthead h1 {
+  font-size: 22px; font-weight: 500; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ink);
+}
+.masthead-sub {
+  margin-top: 6px; font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.08em; color: var(--ink-dim);
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
+/* ── Legend ── */
+.legend {
+  position: absolute; bottom: 28px; left: 32px; width: 230px;
+  padding: 14px 16px; background: var(--card-ground);
+  border: 1px solid var(--hairline); border-radius: 2px;
 }
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+.legend-row { display: flex; align-items: center; gap: 10px; padding: 3px 0; }
+.legend-swatch { width: 14px; height: 10px; flex: none; border-radius: 1px; }
+.legend-name { font-size: 12.5px; letter-spacing: 0.02em; }
+.legend-credit {
+  margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--hairline);
+  font-family: var(--mono); font-size: 8.5px; line-height: 1.5; color: var(--ink-faint);
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+.loading {
+  position: absolute; bottom: 32px; right: 36px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+  color: var(--ink-dim); text-transform: uppercase;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+/* ── Editorial card: always enters from the right ── */
+.card {
+  position: absolute; top: 0; right: 0; height: 100%;
+  width: min(400px, 88vw);
+  padding: 84px 40px 40px;
+  background: var(--card-ground);
+  border-left: 1px solid var(--hairline);
+  overflow-y: auto;
+  animation: card-in 240ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+@keyframes card-in {
+  from { transform: translateX(24px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card { animation: none; }
+}
+.card-close {
+  position: absolute; top: 24px; right: 28px;
+  width: 32px; height: 32px; border: 1px solid var(--hairline);
+  border-radius: 2px; background: none; color: var(--ink-dim);
+  font-size: 18px; line-height: 1; cursor: pointer;
+  font-family: var(--serif);
+}
+.card-close:hover { color: var(--ink); border-color: var(--ink-dim); }
+.card-kicker {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.card-kicker-heritage { color: var(--ink-dim); }
+.card-title {
+  margin-top: 10px; font-size: 34px; font-weight: 500; line-height: 1.1;
+  letter-spacing: 0.01em;
+}
+.card-rule {
+  margin: 18px 0; border: none; border-top: 1px solid var(--hairline);
+}
+.card-meta { display: grid; grid-template-columns: auto 1fr; gap: 4px 18px; }
+.card-meta dt {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--ink-faint); padding-top: 3px;
+}
+.card-meta dd { font-size: 14px; color: var(--ink); }
+.card-body {
+  margin-top: 18px; font-size: 15px; line-height: 1.65; color: var(--ink);
+  max-width: 66ch;
+}
+.card-sources {
+  margin-top: 26px; padding-top: 12px; border-top: 1px solid var(--hairline);
+  font-family: var(--mono); font-size: 9px; line-height: 1.6; color: var(--ink-faint);
 }

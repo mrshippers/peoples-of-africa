@@ -9,14 +9,16 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "check:data": "node scripts/check-data.mjs",
-    "build:data": "node scripts/build-peoples.mjs"
+    "build:data": "node scripts/build-peoples.mjs",
+    "verify": "node verify/verify.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^9.122.0",
     "@react-three/fiber": "^8.17.10",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "three": "^0.185.1"
+    "three": "^0.185.1",
+    "zustand": "^4.5.7"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

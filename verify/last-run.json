@@ -1,0 +1,53 @@
+{
+  "when": "2026-08-18T22:08:38.168Z",
+  "results": [
+    {
+      "metric": "headless render frames",
+      "target": "> 0",
+      "measured": 3,
+      "pass": true
+    },
+    {
+      "metric": "family mesh groups == families",
+      "target": 5,
+      "measured": 5,
+      "pass": true
+    },
+    {
+      "metric": "draw calls at full-continent view",
+      "target": "≤ 150",
+      "measured": 7,
+      "pass": true
+    },
+    {
+      "metric": "zoom-in clamp",
+      "target": "≥ 1.18",
+      "measured": "1.180",
+      "pass": true
+    },
+    {
+      "metric": "zoom-out clamp",
+      "target": "≤ 3",
+      "measured": "3.000",
+      "pass": true
+    },
+    {
+      "metric": "JS bundle gz",
+      "target": "≤ 900 kB",
+      "measured": "279 kB",
+      "pass": true
+    },
+    {
+      "metric": "data payload",
+      "target": "≤ 2.5 MB",
+      "measured": "0.90 MB",
+      "pass": true
+    },
+    {
+      "metric": "design-gate screenshots",
+      "target": "4 written",
+      "measured": 4,
+      "pass": true
+    }
+  ]
+}
