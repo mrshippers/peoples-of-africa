@@ -54,6 +54,56 @@ body {
   font-family: var(--mono); font-size: 8.5px; line-height: 1.5; color: var(--ink-faint);
 }
 
+/* ── Layer switch ── */
+.layers {
+  position: absolute; top: 30px; right: 36px; display: flex; gap: 2px;
+}
+.layers-btn {
+  padding: 7px 14px; background: none; border: 1px solid transparent;
+  border-radius: 2px; color: var(--ink-faint); cursor: pointer;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.layers-btn:hover { color: var(--ink-dim); }
+.layers-btn.is-active {
+  color: var(--ink); border-color: var(--hairline);
+  background: var(--card-ground);
+}
+
+/* ── Timeline scrubber: a ruled timeline, not a media slider ── */
+.timeline {
+  position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+  width: min(680px, 62vw); outline: none;
+}
+.timeline:focus-visible .timeline-cursor { box-shadow: 0 0 0 1px var(--ink-dim); }
+.timeline-readout {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 8px;
+}
+.timeline-year { font-family: var(--serif); font-size: 18px; color: var(--ink); }
+.timeline-count {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--ink-faint);
+}
+.timeline-rail { position: relative; height: 30px; cursor: ew-resize; touch-action: none; }
+.timeline-rule {
+  position: absolute; top: 8px; left: 0; right: 0; height: 1px;
+  background: var(--hairline);
+}
+.timeline-tick {
+  position: absolute; top: 4px; width: 1px; height: 9px;
+  background: var(--ink-faint);
+}
+.timeline-tick span {
+  position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+  font-family: var(--mono); font-size: 8px; letter-spacing: 0.06em;
+  color: var(--ink-faint); white-space: nowrap;
+}
+.timeline-cursor {
+  position: absolute; top: 0; width: 1px; height: 17px;
+  background: var(--ink); transform: translateX(-0.5px);
+}
+
 .loading {
   position: absolute; bottom: 32px; right: 36px;
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;

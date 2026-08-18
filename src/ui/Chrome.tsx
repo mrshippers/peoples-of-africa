@@ -4,18 +4,28 @@
 import { FAMILIES } from "../data";
 import { useApp } from "../state";
 import { DetailCard } from "./DetailCard";
+import { LayerControl } from "./LayerControl";
+import { Timeline } from "./Timeline";
 
 export function Chrome() {
   const peoples = useApp(s => s.peoples);
+  const layer = useApp(s => s.layer);
 
   return (
     <>
       <header className="masthead">
-        <h1>The Peoples of Africa</h1>
-        <p className="masthead-sub">Ethnolinguistic map · after the 1971 National Geographic pair</p>
+        <h1>{layer === "heritage" ? "The Heritage of Africa" : "The Peoples of Africa"}</h1>
+        <p className="masthead-sub">
+          {layer === "heritage"
+            ? "States and kingdoms of the African past"
+            : "Ethnolinguistic map · after the 1971 National Geographic pair"}
+        </p>
       </header>
 
-      <aside className="legend" aria-label="Language family key">
+      <LayerControl />
+      <Timeline />
+
+      <aside className="legend" aria-label="Language family key" hidden={layer === "heritage"}>
         {FAMILIES.map(f => (
           <div className="legend-row" key={f.name}>
             <span className="legend-swatch" style={{ background: f.color }} />

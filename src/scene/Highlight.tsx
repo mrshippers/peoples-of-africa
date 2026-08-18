@@ -15,6 +15,7 @@ interface Slot { geometry: THREE.BufferGeometry; material: THREE.MeshBasicMateri
 export function Highlight({ familyData }: { familyData: FamilyMeshData[] }) {
   const hoverId = useApp(s => s.hoverId);
   const selectedId = useApp(s => s.selectedId);
+  const layer = useApp(s => s.layer);
 
   const lookup = useMemo(() => {
     const m = new Map<string, { fd: FamilyMeshData; triStart: number; triCount: number }>();
@@ -69,7 +70,8 @@ export function Highlight({ familyData }: { familyData: FamilyMeshData[] }) {
     <>
       {slots.map((s, i) => (
         <mesh key={i} geometry={s.geometry} material={s.material}
-          userData={{ layer: "peoples" }} renderOrder={5} />
+          userData={{ layer: "peoples" }} renderOrder={5}
+          visible={layer !== "heritage"} />
       ))}
     </>
   );

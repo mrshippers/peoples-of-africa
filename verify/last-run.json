@@ -1,5 +1,5 @@
 {
-  "when": "2026-08-18T22:11:08.455Z",
+  "when": "2026-08-18T22:13:31.943Z",
   "results": [
     {
       "metric": "headless render frames",
@@ -34,7 +34,7 @@
     {
       "metric": "JS bundle gz",
       "target": "≤ 900 kB",
-      "measured": "279 kB",
+      "measured": "280 kB",
       "pass": true
     },
     {
@@ -52,7 +52,19 @@
     {
       "metric": "pick -> panel populated",
       "target": "≤ 120 ms",
-      "measured": "2.2 ms",
+      "measured": "1.5 ms",
+      "pass": true
+    },
+    {
+      "metric": "orphaned meshes after 20 toggles",
+      "target": "0",
+      "measured": 0,
+      "pass": true
+    },
+    {
+      "metric": "scrubber visible == data-derived (5 years)",
+      "target": "5/5 match",
+      "measured": "-2500: 2/2, -300: 3/3, 800: 5/5, 1350: 15/15, 1870: 21/21",
       "pass": true
     },
     {

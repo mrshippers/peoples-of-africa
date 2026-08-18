@@ -49,7 +49,19 @@ export function HeritageLayer() {
         const visible = active && inYear;
         return (
           <group key={polity.id}>
-            <mesh geometry={geometry} visible={visible} userData={{ layer: "heritage", polity: polity.id }}>
+            <mesh
+              geometry={geometry}
+              visible={visible}
+              userData={{ layer: "heritage", polity: polity.id }}
+              onClick={(e) => {
+                // Clicks select polities only on the pure heritage layer; in
+                // overlay mode the peoples picker owns the pointer.
+                const s = useApp.getState();
+                if (s.layer !== "heritage" || e.delta > 4) return;
+                e.stopPropagation();
+                s.select(s.selectedId === polity.id ? null : polity.id);
+              }}
+            >
               <meshBasicMaterial color={color} transparent opacity={0.38} depthWrite={false} side={THREE.FrontSide} />
             </mesh>
             <mesh position={capitalPos} visible={visible} userData={{ layer: "heritage" }}>

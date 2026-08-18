@@ -156,6 +156,48 @@ try {
   await page.evaluate(() => { window.__poa.select(null); window.__poa.setZoom(2.35); });
   await page.evaluate(() => window.__poa.lookAt(2, 17));
 
+  // ── system 4: layer toggles leave no orphans; scrubber matches the data ──
+  const toggleSeq = ["heritage", "peoples", "overlay", "heritage", "overlay",
+    "peoples", "heritage", "peoples", "overlay", "heritage",
+    "peoples", "overlay", "heritage", "overlay", "peoples",
+    "heritage", "peoples", "heritage", "overlay", "peoples"];
+  let maxOrphans = 0;
+  for (const l of toggleSeq) {
+    const orphans = await page.evaluate(async (layer) => {
+      window.__poa.setLayer(layer);
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      return window.__poa.audit().orphanedMeshes;
+    }, l);
+    maxOrphans = Math.max(maxOrphans, orphans);
+  }
+  record("orphaned meshes after 20 toggles", "0", maxOrphans, maxOrphans === 0);
+
+  const sampleYears = [-2500, -300, 800, 1350, 1870];
+  let scrubberOk = true;
+  const scrubberDetail = [];
+  await page.evaluate(() => window.__poa.setLayer("heritage"));
+  for (const y of sampleYears) {
+    const { visible, expected } = await page.evaluate(async (year) => {
+      window.__poa.setYear(year);
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      return {
+        visible: window.__poa.visiblePolities().sort(),
+        expected: window.__poa.politiesForYear(year).sort(),
+      };
+    }, y);
+    const same = visible.length === expected.length && visible.every((v, i) => v === expected[i]);
+    if (!same) scrubberOk = false;
+    scrubberDetail.push(`${y}: ${visible.length}/${expected.length}`);
+  }
+  record("scrubber visible == data-derived (5 years)", "5/5 match",
+    scrubberDetail.join(", "), scrubberOk);
+
+  // heritage-layer screenshot for the design gate
+  await page.evaluate(() => { window.__poa.setYear(1350); window.__poa.lookAt(8, 15); });
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: path.join(SHOTS, "heritage-1350.png") });
+  await page.evaluate(() => { window.__poa.setLayer("peoples"); window.__poa.lookAt(2, 17); });
+
   // ── design-gate screenshots ──
   await page.screenshot({ path: path.join(SHOTS, "zoom-continent.png") });
   await page.evaluate(() => window.__poa.setZoom(1.6));
