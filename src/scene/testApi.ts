@@ -27,7 +27,7 @@ export interface PoaTestApi {
   visiblePolities(): string[];
   politiesForYear(year: number): string[];
   frameStats(): { count: number; last: number };
-  labelStats(): { visible: number; overlaps: number };
+  labelStats(): { visible: number; overlaps: number; candidates: number };
   select(id: string | null): void;
   panelState(): { open: boolean; id: string | null; populatedInMs: number | null };
 }

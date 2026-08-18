@@ -198,6 +198,63 @@ try {
   await page.screenshot({ path: path.join(SHOTS, "heritage-1350.png") });
   await page.evaluate(() => { window.__poa.setLayer("peoples"); window.__poa.lookAt(2, 17); });
 
+  // ── system 5: label sweep - zoom × density threshold, the grid is the answer ──
+  // Closest tested zoom is 1.6: nearer than that, fewer than 150 territories
+  // fit the viewport at all - the deep-zoom claim below is coverage instead.
+  const zooms = [2.35, 1.9, 1.6];
+  const thresholds = [6, 8, 10, 12, 14];
+  console.log("── label sweep: visible/overlaps per zoom × minFontPx ──");
+  console.log("zoom    " + thresholds.map(t => String(t).padStart(10)).join(""));
+  const sweep = {};
+  for (const z of zooms) {
+    const row = [];
+    for (const t of thresholds) {
+      const stats = await page.evaluate(async ({ z, t }) => {
+        window.__poa.lookAt(2, 17);
+        window.__poa.setZoom(z);
+        window.__poaSetLabelParams({ minFontPx: t });
+        await new Promise(r => setTimeout(r, 120));
+        window.__poaForceLabels();
+        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+        return window.__poa.labelStats();
+      }, { z, t });
+      sweep[`${z}:${t}`] = stats;
+      row.push(`${stats.visible}/${stats.overlaps}`.padStart(10));
+    }
+    console.log(String(z).padEnd(8) + row.join(""));
+  }
+  // Chosen threshold: smallest T with 0 overlaps at every zoom (density wants
+  // small T; legibility wants overlap-free).
+  let chosenT = null;
+  for (const t of thresholds) {
+    if (zooms.every(z => sweep[`${z}:${t}`].overlaps === 0)) { chosenT = t; break; }
+  }
+  record("label threshold from grid", "exists", chosenT ?? "none", chosenT != null);
+  const T = chosenT ?? 10;
+  const closeStats = sweep[`1.6:${T}`];
+  record(`labels at closest zoom (T=${T})`, "≥ 150", closeStats.visible, closeStats.visible >= 150);
+  const overlapTotal = zooms.reduce((s, z) => s + sweep[`${z}:${T}`].overlaps, 0);
+  record(`label overlaps across 3 zooms (T=${T})`, "0", overlapTotal, overlapTotal === 0);
+
+  // At the true minimum zoom the map should label essentially everything in view.
+  const deep = await page.evaluate(async (t) => {
+    window.__poa.lookAt(2, 17);
+    window.__poa.setZoom(1.25);
+    window.__poaSetLabelParams({ minFontPx: t });
+    await new Promise(r => setTimeout(r, 120));
+    window.__poaForceLabels();
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    return window.__poa.labelStats();
+  }, T);
+  record("deep-zoom label coverage (1.25)", "≥ 80% of in-view territories",
+    `${deep.visible}/${deep.candidates}`,
+    deep.candidates > 0 && deep.visible / deep.candidates >= 0.8);
+
+  await page.evaluate(async (t) => {
+    window.__poaSetLabelParams({ minFontPx: t });
+    window.__poa.setZoom(2.35); window.__poa.lookAt(2, 17);
+  }, T);
+
   // ── design-gate screenshots ──
   await page.screenshot({ path: path.join(SHOTS, "zoom-continent.png") });
   await page.evaluate(() => window.__poa.setZoom(1.6));

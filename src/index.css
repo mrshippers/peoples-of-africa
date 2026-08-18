@@ -27,6 +27,28 @@ body {
 
 .globe-canvas { position: absolute !important; inset: 0; }
 
+/* ── Label overlay: printed type over the map ── */
+.labels-overlay {
+  position: absolute; inset: 0; pointer-events: none;
+  opacity: 0; transition: opacity 160ms ease;
+}
+.labels-overlay.is-settled { opacity: 1; }
+.lbl-people {
+  font-family: var(--serif); fill: #211c13; letter-spacing: 0.08em;
+  text-anchor: middle;
+  paint-order: stroke; stroke: rgba(238, 230, 213, 0.55); stroke-width: 2.2px;
+}
+.lbl-heritage {
+  font-family: var(--serif); fill: #2a1f16; letter-spacing: 0.2em;
+  text-anchor: middle;
+  paint-order: stroke; stroke: rgba(238, 230, 213, 0.5); stroke-width: 2px;
+}
+.lbl-sub {
+  font-family: var(--mono); fill: #4a4033; letter-spacing: 0.08em;
+  text-anchor: middle;
+  paint-order: stroke; stroke: rgba(238, 230, 213, 0.45); stroke-width: 1.6px;
+}
+
 /* ── Masthead ── */
 .masthead {
   position: absolute; top: 28px; left: 32px; pointer-events: none;
