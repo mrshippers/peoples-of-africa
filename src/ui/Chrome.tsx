@@ -1,15 +1,28 @@
 // UI layer: everything that is not the globe. Peripheral, recedes.
 // System 3 adds the editorial card; system 4 the layer toggle + scrubber.
 
+import { useEffect, useState } from "react";
 import { FAMILIES } from "../data";
 import { useApp } from "../state";
 import { DetailCard } from "./DetailCard";
 import { LayerControl } from "./LayerControl";
 import { Timeline } from "./Timeline";
 
+interface Credit { title: string; author: string; license: string }
+
 export function Chrome() {
   const peoples = useApp(s => s.peoples);
   const layer = useApp(s => s.layer);
+  const [credits, setCredits] = useState<Record<string, Credit> | null>(null);
+
+  useEffect(() => {
+    fetch(`${import.meta.env.BASE_URL}models/credits.json`)
+      .then(r => r.json()).then(setCredits).catch(() => {});
+  }, []);
+
+  const modelAuthors = credits
+    ? [...new Set(Object.values(credits).map(c => `${c.author} (${c.license})`))].sort()
+    : [];
 
   return (
     <>
@@ -33,7 +46,9 @@ export function Chrome() {
           </div>
         ))}
         <p className="legend-credit">
-          Boundaries: Murdock (1959), digitized N. Nunn · Families: Glottolog · Base: Natural Earth
+          Boundaries: Murdock (1959), digitized N. Nunn · Families: Glottolog ·
+          Base: Natural Earth II · Relief: AWS Terrain Tiles (Mapzen)
+          {modelAuthors.length > 0 && <> · Models: {modelAuthors.join(", ")}</>}
         </p>
       </aside>
 
