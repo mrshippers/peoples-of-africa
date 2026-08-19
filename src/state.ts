@@ -2,12 +2,14 @@
 
 import { create } from "zustand";
 import type { PeopleFeature, HeritageData } from "./data";
+import type { HeightField } from "./scene/terrain";
 
 export type Layer = "peoples" | "heritage" | "overlay";
 
 interface AppState {
   peoples: PeopleFeature[] | null;
   heritage: HeritageData | null;
+  heightField: HeightField | null;
   layer: Layer;
   year: number;
   hoverId: string | null;
@@ -16,6 +18,7 @@ interface AppState {
   panelPopulatedInMs: number | null;
   setPeoples(p: PeopleFeature[]): void;
   setHeritage(h: HeritageData): void;
+  setHeightField(h: HeightField): void;
   setLayer(l: Layer): void;
   setYear(y: number): void;
   setHover(id: string | null): void;
@@ -26,6 +29,7 @@ interface AppState {
 export const useApp = create<AppState>((set, get) => ({
   peoples: null,
   heritage: null,
+  heightField: null,
   layer: "peoples",
   year: 1500,
   hoverId: null,
@@ -34,6 +38,7 @@ export const useApp = create<AppState>((set, get) => ({
   panelPopulatedInMs: null,
   setPeoples: (peoples) => set({ peoples }),
   setHeritage: (heritage) => set({ heritage }),
+  setHeightField: (heightField) => set({ heightField }),
   setLayer: (layer) => set({ layer }),
   setYear: (year) => set({ year }),
   setHover: (hoverId) => {

@@ -1,16 +1,17 @@
-// Cartographic typography layer. One SVG overlay; labels are laid out when the
-// camera settles and fade away while it moves - the map composes itself when
-// you stop to read it. Serif caps for peoples, small caps for polities, mono
-// micro-labels for metadata.
+// Cartographic typography over the diorama. One SVG overlay; labels lay out
+// when the camera settles and fade while it moves. Projection goes through
+// the terrain so type sits on the land it names.
 
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useApp } from "../state";
 import { computeLabelSpec, layoutLabels, DEFAULT_PARAMS } from "./labels";
-import type { LabelSpec, LayoutParams, PlacedLabel } from "./labels";
+import type { LabelSpec, LayoutParams, PlacedLabel, LabelProjector } from "./labels";
 import { registerTestApi } from "./testApi";
 import type { PeopleFeature } from "../data";
+import { mapToWorld } from "./terrain";
+import { ZOOM_MIN, ZOOM_MAX } from "./DioramaScene";
 
 const SETTLE_FRAMES = 6;
 
@@ -29,6 +30,7 @@ export function LabelLayer() {
   const { camera, gl, size } = useThree();
   const peoples = useApp(s => s.peoples);
   const heritage = useApp(s => s.heritage);
+  const heightField = useApp(s => s.heightField);
   const layer = useApp(s => s.layer);
   const year = useApp(s => s.year);
 
@@ -49,7 +51,6 @@ export function LabelLayer() {
     [heritage],
   );
 
-  // The overlay element lives beside the canvas, pointer-transparent.
   useEffect(() => {
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("class", "labels-overlay");
@@ -70,13 +71,22 @@ export function LabelLayer() {
 
   const relayout = () => {
     const svg = svgRef.current;
-    if (!svg) return;
-    // Heritage sub-labels are the polity dates - worth showing at smaller type
+    if (!svg || !heightField) return;
+    const projector: LabelProjector = (lon, lat) => {
+      const world = mapToWorld(lon, lat, Math.max(0, heightField.worldY(lon, lat)) + 0.02);
+      const ndc = world.project(camera);
+      if (ndc.z > 1 || ndc.z < -1) return null;
+      return { x: (ndc.x + 1) / 2 * size.width, y: (1 - ndc.y) / 2 * size.height };
+    };
+    // Heritage sub-labels are the polity dates - show them at smaller type
     // than the peoples' language micro-labels.
     const effParams = layer === "peoples"
       ? params.current
       : { ...params.current, subMinFontPx: 12 };
-    const { placed, candidates } = layoutLabels(activeSpecs(), camera, size.width, size.height, effParams);
+    const dist = camera.position.distanceTo(new THREE.Vector3(0, 0, 0.2));
+    const zoomT = (dist - ZOOM_MIN * 1.6) / (ZOOM_MAX * 0.8 - ZOOM_MIN * 1.6);
+    const { placed, candidates } = layoutLabels(
+      activeSpecs(), projector, size.width, size.height, effParams, zoomT);
     lastPlaced.current = placed;
     lastCandidates.current = candidates;
     svg.setAttribute("viewBox", `0 0 ${size.width} ${size.height}`);
@@ -103,8 +113,7 @@ export function LabelLayer() {
     dirty.current = false;
   };
 
-  // Layer, year, or data changes invalidate the layout.
-  useEffect(() => { dirty.current = true; }, [peopleSpecs, heritageSpecs, layer, year, size]);
+  useEffect(() => { dirty.current = true; }, [peopleSpecs, heritageSpecs, layer, year, size, heightField]);
 
   useFrame(() => {
     const moved = !camera.matrixWorld.equals(lastMatrix.current);
@@ -126,8 +135,8 @@ export function LabelLayer() {
       labelStats: () => {
         const svg = svgRef.current;
         if (!svg) return { visible: 0, overlaps: 0, candidates: 0 };
-        // getBoundingClientRect misreports text-on-path in Chromium (boxes
-        // anchor at the origin); measure real glyph extents instead.
+        // getBoundingClientRect misreports text-on-path in Chromium; measure
+        // real glyph extents, skipping the empties it reports for some glyphs.
         const rects: { l: number; t: number; r: number; b: number }[] = [];
         svg.querySelectorAll("text.lbl-people, text.lbl-heritage").forEach(el => {
           const t = el as SVGTextElement;
@@ -136,7 +145,7 @@ export function LabelLayer() {
           let l = Infinity, tp = Infinity, r = -Infinity, bt = -Infinity;
           for (let i = 0; i < n; i++) {
             const e = t.getExtentOfChar(i);
-            if (e.width === 0 && e.height === 0) continue; // Chromium reports some path glyphs empty
+            if (e.width === 0 && e.height === 0) continue;
             l = Math.min(l, e.x); tp = Math.min(tp, e.y);
             r = Math.max(r, e.x + e.width); bt = Math.max(bt, e.y + e.height);
           }
@@ -166,7 +175,7 @@ export function LabelLayer() {
     w.__poaSetLabelParams = (p: Partial<LayoutParams>) => { Object.assign(params.current, p); dirty.current = true; relayout(); };
     w.__poaForceLabels = () => { relayout(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [peopleSpecs, heritageSpecs, layer, camera, size]);
+  }, [peopleSpecs, heritageSpecs, layer, camera, size, heightField]);
 
   return null;
 }

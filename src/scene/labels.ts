@@ -3,9 +3,10 @@
 // screen size, greedily pruned so nothing overlaps. Pure math + SVG strings;
 // no React, no three.js scene objects - the overlay is one <svg>.
 
-import * as THREE from "three";
 import type { PeopleFeature } from "../data";
-import { latLonToVec3 } from "./build";
+
+/** Screen-space projection of a map point; null = not visible. */
+export type LabelProjector = (lon: number, lat: number) => { x: number; y: number } | null;
 
 export interface LabelSpec {
   id: string;
@@ -132,7 +133,6 @@ export interface LayoutParams {
 
 export const DEFAULT_PARAMS: LayoutParams = { minFontPx: 10, maxFontPx: 28, subMinFontPx: 19 };
 
-const ALTITUDE = 1.006;
 
 export interface LayoutResult {
   placed: PlacedLabel[];
@@ -141,38 +141,26 @@ export interface LayoutResult {
 
 export function layoutLabels(
   specs: LabelSpec[],
-  camera: THREE.Camera,
+  project: LabelProjector,
   width: number,
   height: number,
   params: LayoutParams = DEFAULT_PARAMS,
+  zoomT = 1, // 1 = full view, 0 = leaned all the way in
 ): LayoutResult {
-  const camDir = camera.position.clone().normalize();
   const placed: PlacedLabel[] = [];
   const taken: { x: number; y: number; w: number; h: number }[] = [];
   let candidates = 0;
 
   // Leaning in shrinks type relative to territory, like approaching a wall
-  // map: cap tapers from maxFontPx at continental view to half at deep zoom.
-  const dist = camera.position.length();
-  const zoomT = Math.min(1, Math.max(0, (dist - 1.3) / (2.0 - 1.3)));
+  // map: cap tapers from maxFontPx at full view to half at deep zoom.
   const floorCap = Math.max(11, params.maxFontPx / 2.5);
-  const effMaxFont = floorCap + (params.maxFontPx - floorCap) * zoomT;
-
-  const project = (lon: number, lat: number): { x: number; y: number; facing: number } | null => {
-    const world = latLonToVec3(lat, lon, ALTITUDE);
-    const facing = world.clone().normalize().dot(camDir);
-    const ndc = world.project(camera);
-    if (ndc.z > 1) return null;
-    return { x: (ndc.x + 1) / 2 * width, y: (1 - ndc.y) / 2 * height, facing };
-  };
+  const effMaxFont = floorCap + (params.maxFontPx - floorCap) * Math.min(1, Math.max(0, zoomT));
 
   const bySize = [...specs].sort((a, b) => b.areaDeg2 - a.areaDeg2);
 
   for (const spec of bySize) {
     const pts = spec.ctrl.map(([lon, lat]) => project(lon, lat));
-    // Grazing-angle labels foreshorten unreadably and their glyph extents lie;
-    // keep type on the facing two-thirds of the disc.
-    if (pts.some(p => !p || p.facing < 0.35)) continue;
+    if (pts.some(p => !p)) continue;
     const [a, m, b] = pts as { x: number; y: number }[];
     if ([a, m, b].some(p => p.x < -80 || p.x > width + 80 || p.y < -40 || p.y > height + 40)) continue;
 

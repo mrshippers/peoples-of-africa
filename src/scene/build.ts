@@ -1,26 +1,13 @@
-// Geometry construction for the globe: GeoJSON polygons -> spherical meshes.
-// Plain three.js, no React. Units: degrees in, unit-sphere radii out.
+// Geometry construction: GeoJSON polygons -> meshes draped through a
+// pluggable projector. The diorama projects lon/lat onto the displaced plate;
+// tests can pass any projector. Plain three.js, no React.
 
 import * as THREE from "three";
 import type { PeopleFeature, FamilyName } from "../data";
 
-export const GLOBE_RADIUS = 1;
-export const LAYER_ALTITUDE = 1.0035;   // polygon drape height above sphere
-export const OUTLINE_ALTITUDE = 1.0042; // outlines sit just above fills
-
-// lon/lat (degrees) -> position matching SphereGeometry's equirect UV layout.
-export function latLonToVec3(lat: number, lon: number, r: number): THREE.Vector3 {
-  const phi = (90 - lat) * (Math.PI / 180);
-  const theta = (lon + 180) * (Math.PI / 180);
-  return new THREE.Vector3(
-    -r * Math.sin(phi) * Math.cos(theta),
-    r * Math.cos(phi),
-    r * Math.sin(phi) * Math.sin(theta),
-  );
-}
+export type ProjectFn = (lon: number, lat: number) => THREE.Vector3;
 
 // Triangulate one GeoJSON polygon (outer ring + holes) in the lon/lat plane.
-// Returns flat triangle list as [lon, lat] pairs.
 function triangulate(rings: number[][][]): [number, number][] {
   const outer = rings[0].map(([x, y]) => new THREE.Vector2(x, y));
   const holes = rings.slice(1).map(ring => ring.map(([x, y]) => new THREE.Vector2(x, y)));
@@ -33,8 +20,7 @@ function triangulate(rings: number[][][]): [number, number][] {
   return out;
 }
 
-// Long chords dip below the sphere when projected; split triangles until no
-// edge exceeds maxDeg so the drape hugs the surface.
+// Split triangles until no edge exceeds maxDeg so drapes follow the terrain.
 function subdivide(tris: [number, number][], maxDeg: number): [number, number][] {
   const out: [number, number][] = [];
   const stack: [number, number][][] = [];
@@ -72,18 +58,18 @@ function polygonsOf(f: PeopleFeature): number[][][][] {
     : (f.geometry.coordinates as number[][][][]);
 }
 
-// Build merged non-indexed geometry. Strategy "family" (default) merges each
-// family into one mesh with contiguous per-group triangle ranges - a face
-// index maps to a group by range lookup and a highlight can be drawn with
-// setDrawRange over the same buffers. Strategy "group" (for the performance
-// sweep only) emits one mesh per group.
-export function buildFamilyMeshes(
-  features: PeopleFeature[],
-  opts: { altitude?: number; maxEdgeDeg?: number; strategy?: "family" | "group" } = {},
-): FamilyMeshData[] {
-  const altitude = opts.altitude ?? LAYER_ALTITUDE;
-  const maxEdge = opts.maxEdgeDeg ?? 3;
-  const byFamily = new Map<FamilyName | string, PeopleFeature[]>();
+export interface BuildOpts {
+  project: ProjectFn;
+  maxEdgeDeg?: number;
+  strategy?: "family" | "group";
+}
+
+// One merged non-indexed geometry per family; each group's triangles are
+// contiguous so a face index resolves to a group and a highlight can reuse
+// the buffers with setDrawRange. Strategy "group" is for the perf sweep.
+export function buildFamilyMeshes(features: PeopleFeature[], opts: BuildOpts): FamilyMeshData[] {
+  const maxEdge = opts.maxEdgeDeg ?? 0.9;
+  const byFamily = new Map<string, PeopleFeature[]>();
   for (const f of features) {
     const key = opts.strategy === "group" ? f.properties.id : f.properties.family;
     if (!byFamily.has(key)) byFamily.set(key, []);
@@ -91,9 +77,8 @@ export function buildFamilyMeshes(
   }
 
   const result: FamilyMeshData[] = [];
-  for (const [key, feats] of byFamily) {
-    const family = (opts.strategy === "group" ? feats[0].properties.family : key) as FamilyName;
-    void key;
+  for (const [, feats] of byFamily) {
+    const family = feats[0].properties.family;
     const positions: number[] = [];
     const ranges: GroupRange[] = [];
     for (const f of feats) {
@@ -101,7 +86,7 @@ export function buildFamilyMeshes(
       for (const poly of polygonsOf(f)) {
         const tris = subdivide(triangulate(poly), maxEdge);
         for (const [lon, lat] of tris) {
-          const v = latLonToVec3(lat, lon, altitude);
+          const v = opts.project(lon, lat);
           positions.push(v.x, v.y, v.z);
         }
       }
@@ -115,16 +100,22 @@ export function buildFamilyMeshes(
   return result;
 }
 
-// One merged LineSegments geometry of every group outline (single ink colour).
-export function buildOutlines(features: PeopleFeature[], altitude = OUTLINE_ALTITUDE): THREE.BufferGeometry {
+// One merged LineSegments geometry of every group outline.
+export function buildOutlines(features: PeopleFeature[], project: ProjectFn, maxSegDeg = 0.5): THREE.BufferGeometry {
   const positions: number[] = [];
   for (const f of features) {
     for (const poly of polygonsOf(f)) {
       for (const ring of poly) {
         for (let i = 0; i < ring.length - 1; i++) {
-          const a = latLonToVec3(ring[i][1], ring[i][0], altitude);
-          const b = latLonToVec3(ring[i + 1][1], ring[i + 1][0], altitude);
-          positions.push(a.x, a.y, a.z, b.x, b.y, b.z);
+          // densify long outline segments so they hug the terrain
+          const [lon0, lat0] = ring[i], [lon1, lat1] = ring[i + 1];
+          const steps = Math.max(1, Math.ceil(Math.hypot(lon1 - lon0, lat1 - lat0) / maxSegDeg));
+          for (let s = 0; s < steps; s++) {
+            const t0 = s / steps, t1 = (s + 1) / steps;
+            const a = project(lon0 + (lon1 - lon0) * t0, lat0 + (lat1 - lat0) * t0);
+            const b = project(lon0 + (lon1 - lon0) * t1, lat0 + (lat1 - lat0) * t1);
+            positions.push(a.x, a.y, a.z, b.x, b.y, b.z);
+          }
         }
       }
     }
@@ -134,12 +125,12 @@ export function buildOutlines(features: PeopleFeature[], altitude = OUTLINE_ALTI
   return geometry;
 }
 
-// Heritage extents: same drape, one geometry per polity (they toggle by year).
-export function buildExtentGeometry(ring: [number, number][], altitude = LAYER_ALTITUDE): THREE.BufferGeometry {
-  const tris = subdivide(triangulate([ring]), 2.5);
+// Heritage extents: one geometry per polity.
+export function buildExtentGeometry(ring: [number, number][], project: ProjectFn): THREE.BufferGeometry {
+  const tris = subdivide(triangulate([ring]), 0.9);
   const positions: number[] = [];
   for (const [lon, lat] of tris) {
-    const v = latLonToVec3(lat, lon, altitude);
+    const v = project(lon, lat);
     positions.push(v.x, v.y, v.z);
   }
   const geometry = new THREE.BufferGeometry();
