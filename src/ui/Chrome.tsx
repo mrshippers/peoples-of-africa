@@ -15,10 +15,14 @@ export function Chrome() {
   const layer = useApp(s => s.layer);
   const [credits, setCredits] = useState<Record<string, Credit> | null>(null);
 
+  // Behind the same gate as every other non-essential fetch: attribution must
+  // not compete with the plate for first-paint bandwidth.
+  const baseReady = useApp(s => s.baseReady);
   useEffect(() => {
+    if (!baseReady) return;
     fetch(`${import.meta.env.BASE_URL}models/credits.json`)
       .then(r => r.json()).then(setCredits).catch(() => {});
-  }, []);
+  }, [baseReady]);
 
   const modelAuthors = credits
     ? [...new Set(Object.values(credits).map(c => `${c.author} (${c.license})`))].sort()

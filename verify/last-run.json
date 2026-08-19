@@ -1,5 +1,5 @@
 {
-  "when": "2026-08-19T02:13:52.181Z",
+  "when": "2026-08-19T02:19:56.901Z",
   "results": [
     {
       "metric": "headless render frames",
@@ -117,8 +117,8 @@
     },
     {
       "metric": "frame p95, 10s pan, desktop",
-      "target": "≤ 21.4 ms (vsync-relative) at ≥ 57 fps",
-      "measured": "18.7 ms @ 60.1 fps",
+      "target": "≤ 19.7 ms (vsync-relative) at ≥ 57 fps",
+      "measured": "18.0 ms @ 60.0 fps",
       "pass": true
     },
     {
@@ -134,10 +134,10 @@
       "pass": true
     },
     {
-      "metric": "time to visible map (Fast 3G)",
+      "metric": "time to visible map (Fast 3G, median of 3)",
       "target": "≤ 6000 ms (revised, see brief-v2)",
-      "measured": "6333 ms",
-      "pass": false
+      "measured": "5585 ms [5521, 5952, 5585]",
+      "pass": true
     }
   ]
 }

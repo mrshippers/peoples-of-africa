@@ -406,25 +406,32 @@ try {
     await perfBrowser.close();
   }
 
-  // ── TTI on Fast 3G: first rendered frame, cold cache ──
+  // ── TTI on Fast 3G, cold cache, median of 3 ──
+  // A single throttled cold load swings ~1.5 s with background load on the
+  // machine; the median is the honest figure and all samples are printed.
   {
-    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
-    const p = await ctx.newPage();
-    const cdp = await ctx.newCDPSession(p);
-    await cdp.send("Network.enable");
-    await cdp.send("Network.setCacheDisabled", { cacheDisabled: true });
-    await cdp.send("Network.emulateNetworkConditions", {
-      offline: false, latency: 150, downloadThroughput: 180000, uploadThroughput: 84375,
-    });
-    const t0 = Date.now();
-    await p.goto("http://localhost:4517/");
-    // The honest signal: the terrain plate is drawn, not just a blank frame.
-    await p.waitForFunction(
-      () => window.__poa && typeof window.__poa.terrainReady === "function" && window.__poa.terrainReady(),
-      null, { timeout: 60000 });
-    const tti = Date.now() - t0;
-    record("time to visible map (Fast 3G)", "≤ 6000 ms (revised, see brief-v2)", `${tti} ms`, tti <= 6000);
-    await ctx.close();
+    const samples = [];
+    for (let i = 0; i < 3; i++) {
+      const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+      const p = await ctx.newPage();
+      const cdp = await ctx.newCDPSession(p);
+      await cdp.send("Network.enable");
+      await cdp.send("Network.setCacheDisabled", { cacheDisabled: true });
+      await cdp.send("Network.emulateNetworkConditions", {
+        offline: false, latency: 150, downloadThroughput: 180000, uploadThroughput: 84375,
+      });
+      const t0 = Date.now();
+      await p.goto("http://localhost:4517/");
+      await p.waitForFunction(
+        () => window.__poa && typeof window.__poa.terrainReady === "function" && window.__poa.terrainReady(),
+        null, { timeout: 60000 });
+      samples.push(Date.now() - t0);
+      await ctx.close();
+    }
+    const sorted = [...samples].sort((a, b) => a - b);
+    const tti = sorted[1];
+    record("time to visible map (Fast 3G, median of 3)", "≤ 6000 ms (revised, see brief-v2)",
+      `${tti} ms [${samples.join(", ")}]`, tti <= 6000);
   }
 } finally {
   if (browser) await browser.close();
