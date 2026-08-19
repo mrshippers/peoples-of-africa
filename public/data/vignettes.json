@@ -1,0 +1,206 @@
+[
+ {
+  "id": "giraffe",
+  "label": "SERENGETI SAFARI",
+  "sub": "Giraffa camelopardalis",
+  "model": "giraffe",
+  "lon": 34.9,
+  "lat": -2.3,
+  "scale": 0.15,
+  "rotY": 0.6,
+  "needs": "land",
+  "bbox": [
+   33.4,
+   -4.2,
+   36.6,
+   -1.0
+  ]
+ },
+ {
+  "id": "elephant",
+  "label": "OKAVANGO DELTA",
+  "sub": "Loxodonta africana",
+  "model": "elephant",
+  "lon": 22.9,
+  "lat": -19.3,
+  "scale": 0.14,
+  "rotY": -0.4,
+  "needs": "land",
+  "bbox": [
+   21.0,
+   -20.8,
+   24.6,
+   -18.0
+  ]
+ },
+ {
+  "id": "lion",
+  "label": "KRUGER",
+  "sub": "Panthera leo",
+  "model": "lion",
+  "lon": 31.4,
+  "lat": -24.0,
+  "scale": 0.11,
+  "rotY": -1.2,
+  "needs": "land",
+  "bbox": [
+   30.6,
+   -25.6,
+   32.2,
+   -22.4
+  ]
+ },
+ {
+  "id": "gorilla",
+  "label": "VIRUNGA",
+  "sub": "Gorilla beringei",
+  "model": "gorilla",
+  "lon": 29.45,
+  "lat": -1.45,
+  "scale": 0.1,
+  "rotY": 1.4,
+  "needs": "land",
+  "bbox": [
+   28.6,
+   -2.6,
+   30.2,
+   -0.6
+  ]
+ },
+ {
+  "id": "camel",
+  "label": "T\u00c9N\u00c9R\u00c9 CARAVAN",
+  "sub": "Camelus dromedarius",
+  "model": "camel",
+  "lon": 10.8,
+  "lat": 18.4,
+  "scale": 0.12,
+  "rotY": 2.4,
+  "needs": "land",
+  "bbox": [
+   8.0,
+   15.5,
+   14.0,
+   21.0
+  ]
+ },
+ {
+  "id": "zebra",
+  "label": "ETOSHA",
+  "sub": "Equus quagga",
+  "model": "zebra",
+  "lon": 16.4,
+  "lat": -18.8,
+  "scale": 0.11,
+  "rotY": 0.2,
+  "needs": "land",
+  "bbox": [
+   14.8,
+   -19.8,
+   17.8,
+   -18.0
+  ]
+ },
+ {
+  "id": "rhino",
+  "label": "HLUHLUWE",
+  "sub": "Ceratotherium simum",
+  "model": "rhino",
+  "lon": 32.0,
+  "lat": -28.1,
+  "scale": 0.11,
+  "rotY": -0.7,
+  "needs": "land",
+  "bbox": [
+   31.0,
+   -29.2,
+   32.8,
+   -27.2
+  ]
+ },
+ {
+  "id": "dhow",
+  "label": "ZANZIBAR DHOW",
+  "sub": "Swahili coast trade",
+  "model": "sailboat",
+  "lon": 39.8,
+  "lat": -6.2,
+  "scale": 0.13,
+  "rotY": -0.9,
+  "needs": "water",
+  "bbox": [
+   38.8,
+   -7.4,
+   41.0,
+   -5.2
+  ]
+ },
+ {
+  "id": "pyramids",
+  "label": "GIZA",
+  "sub": "Old Kingdom \u00b7 c. 2560 BCE",
+  "model": "@pyramids",
+  "lon": 31.13,
+  "lat": 29.98,
+  "scale": 0.13,
+  "rotY": 0.35,
+  "needs": "land",
+  "bbox": [
+   30.4,
+   29.2,
+   32.0,
+   30.6
+  ]
+ },
+ {
+  "id": "baobabs",
+  "label": "AVENUE OF BAOBABS",
+  "sub": "Adansonia grandidieri",
+  "model": "@baobabs",
+  "lon": 44.42,
+  "lat": -20.25,
+  "scale": 0.12,
+  "rotY": 0.0,
+  "needs": "land",
+  "bbox": [
+   43.6,
+   -21.2,
+   45.2,
+   -19.4
+  ]
+ },
+ {
+  "id": "palms",
+  "label": "SIWA OASIS",
+  "sub": "Phoenix dactylifera",
+  "model": "palm",
+  "lon": 25.52,
+  "lat": 29.2,
+  "scale": 0.1,
+  "rotY": 0.0,
+  "needs": "land",
+  "bbox": [
+   24.8,
+   28.6,
+   26.4,
+   29.8
+  ]
+ },
+ {
+  "id": "kilimanjaro",
+  "label": "KILIMANJARO",
+  "sub": "5,895 m",
+  "model": "@marker",
+  "lon": 37.35,
+  "lat": -3.07,
+  "scale": 0.0,
+  "rotY": 0.0,
+  "needs": "land",
+  "bbox": [
+   36.8,
+   -3.6,
+   37.9,
+   -2.6
+  ]
+ }
+]

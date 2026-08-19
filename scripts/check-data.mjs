@@ -2,7 +2,7 @@
 // Brief requires: >=300 groups, 100% with family + polygon; >=40 polities, 100%
 // with date range + extent.
 
-import { readFileSync, statSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
@@ -66,15 +66,12 @@ for (const p of pols) {
 }
 if (pols.length < 40) fail(`heritage: only ${pols.length} polities (< 40)`);
 
-// ── payload budget context ──
+// ── payload report (budget asserted in verify, v2 numbers) ──
 const gz = (f) => gzipSync(readFileSync(f)).length;
-const texPath = path.join(ROOT, "public/textures/earth-relief.jpg");
 const payload = {
   "peoples.geojson (gz)": gz(peoplesPath),
   "heritage.json (gz)": gz(heritagePath),
-  "earth-relief.jpg": statSync(texPath).size,
 };
-const totalMB = Object.values(payload).reduce((a, b) => a + b, 0) / 1e6;
 
 console.log("── check:data ──");
 console.log(`groups: ${feats.length} (${withFamily} with family, ${withPolygon} with polygon)`);
@@ -83,8 +80,6 @@ for (const f of feats) famCount[f.properties.family] = (famCount[f.properties.fa
 console.log("families:", famCount);
 console.log(`polities: ${pols.length} (${withRange} with date range, ${withExtent} with extent)`);
 for (const [k, v] of Object.entries(payload)) console.log(`${k}: ${(v / 1e3).toFixed(0)} kB`);
-console.log(`lazy payload total: ${totalMB.toFixed(2)} MB (budget 2.5 MB)`);
-if (totalMB > 2.5) fail(`payload ${totalMB.toFixed(2)} MB exceeds 2.5 MB budget`);
 
 if (failures) { console.error(`\n${failures} failure(s)`); process.exit(1); }
 console.log("PASS");

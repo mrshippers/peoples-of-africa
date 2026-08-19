@@ -30,6 +30,7 @@ export interface PoaTestApi {
   profileStart(): void;
   profileEnd(): { frames: number; meanMs: number; p95Ms: number };
   labelStats(): { visible: number; overlaps: number; candidates: number };
+  vignetteAudit(): { id: string; inBbox: boolean; terrainOk: boolean; hasModel: boolean }[];
   select(id: string | null): void;
   panelState(): { open: boolean; id: string | null; populatedInMs: number | null };
 }

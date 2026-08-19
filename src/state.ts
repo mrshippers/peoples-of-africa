@@ -6,10 +6,24 @@ import type { HeightField } from "./scene/terrain";
 
 export type Layer = "peoples" | "heritage" | "overlay";
 
+export interface VignetteDef {
+  id: string;
+  label: string;
+  sub: string;
+  model: string;      // glb name in public/models, or @pyramids/@baobabs/@marker
+  lon: number;
+  lat: number;
+  scale: number;
+  rotY: number;
+  needs: "land" | "water";
+  bbox: [number, number, number, number]; // lon0, lat0, lon1, lat1
+}
+
 interface AppState {
   peoples: PeopleFeature[] | null;
   heritage: HeritageData | null;
   heightField: HeightField | null;
+  vignettes: VignetteDef[] | null;
   layer: Layer;
   year: number;
   hoverId: string | null;
@@ -19,6 +33,7 @@ interface AppState {
   setPeoples(p: PeopleFeature[]): void;
   setHeritage(h: HeritageData): void;
   setHeightField(h: HeightField): void;
+  setVignettes(v: VignetteDef[]): void;
   setLayer(l: Layer): void;
   setYear(y: number): void;
   setHover(id: string | null): void;
@@ -30,6 +45,7 @@ export const useApp = create<AppState>((set, get) => ({
   peoples: null,
   heritage: null,
   heightField: null,
+  vignettes: null,
   layer: "peoples",
   year: 1500,
   hoverId: null,
@@ -39,6 +55,7 @@ export const useApp = create<AppState>((set, get) => ({
   setPeoples: (peoples) => set({ peoples }),
   setHeritage: (heritage) => set({ heritage }),
   setHeightField: (heightField) => set({ heightField }),
+  setVignettes: (vignettes) => set({ vignettes }),
   setLayer: (layer) => set({ layer }),
   setYear: (year) => set({ year }),
   setHover: (hoverId) => {

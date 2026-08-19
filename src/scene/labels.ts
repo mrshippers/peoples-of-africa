@@ -146,9 +146,10 @@ export function layoutLabels(
   height: number,
   params: LayoutParams = DEFAULT_PARAMS,
   zoomT = 1, // 1 = full view, 0 = leaned all the way in
+  reserved: { x: number; y: number; w: number; h: number }[] = [],
 ): LayoutResult {
   const placed: PlacedLabel[] = [];
-  const taken: { x: number; y: number; w: number; h: number }[] = [];
+  const taken: { x: number; y: number; w: number; h: number }[] = [...reserved];
   let candidates = 0;
 
   // Leaning in shrinks type relative to territory, like approaching a wall

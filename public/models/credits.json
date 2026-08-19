@@ -1,0 +1,23 @@
+{
+ "rhino": {
+  "title": "Rhino - Free 3D Model By Tom VanAntwerp - Poly Pizza",
+  "author": "Tom VanAntwerp",
+  "license": "CC-BY",
+  "id": "9deYXdpoeTC",
+  "bytes": 75872
+ },
+ "sailboat": {
+  "title": "Sail Ship - Free 3D Model By Quaternius - Poly Pizza",
+  "author": "Quaternius",
+  "license": "CC0",
+  "id": "cIzO4MBPqI",
+  "bytes": 214464
+ },
+ "palm": {
+  "title": "Palm Tree - Free 3D Model By Quaternius - Poly Pizza",
+  "author": "Quaternius",
+  "license": "CC0",
+  "id": "A6cKJYFsIb",
+  "bytes": 118032
+ }
+}
