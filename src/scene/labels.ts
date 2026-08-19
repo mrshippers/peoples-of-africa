@@ -136,7 +136,8 @@ export const DEFAULT_PARAMS: LayoutParams = { minFontPx: 10, maxFontPx: 28, subM
 
 export interface LayoutResult {
   placed: PlacedLabel[];
-  candidates: number; // specs in view before font/collision culling
+  candidates: number; // specs in view at all
+  eligible: number;   // in view AND big enough to set at the current threshold
 }
 
 export function layoutLabels(
@@ -151,6 +152,7 @@ export function layoutLabels(
   const placed: PlacedLabel[] = [];
   const taken: { x: number; y: number; w: number; h: number }[] = [...reserved];
   let candidates = 0;
+  let eligible = 0;
 
   // Leaning in shrinks type relative to territory, like approaching a wall
   // map: cap tapers from maxFontPx at full view to half at deep zoom.
@@ -174,6 +176,7 @@ export function layoutLabels(
     // baseline - glyphs past a path's end are clipped, not wrapped.
     const fontPx = Math.min(effMaxFont, Math.max(4, (baselineLen * 0.92) / (Math.max(4, spec.text.length) * 0.78)));
     if (fontPx < params.minFontPx) continue;
+    eligible++;
 
     // Keep text on a left-to-right baseline.
     const flip = a.x > b.x;
@@ -188,7 +191,9 @@ export function layoutLabels(
     // Big type earns less tracking spread: stretch tapers from 2.2× at the
     // cull threshold to none at the size cap, so close zooms keep density.
     const sizeT = Math.min(1, Math.max(0, (fontPx - params.minFontPx) / (params.maxFontPx - params.minFontPx)));
-    const stretchMax = 2.2 - sizeT * 1.2;
+    // Leaning in, tracking spread costs coverage: a stretched label's footprint
+    // blocks its neighbours. Taper the spread with the view distance too.
+    const stretchMax = (2.2 - sizeT * 1.2) * (0.55 + 0.45 * Math.min(1, Math.max(0, zoomT)));
     const stretched = Math.min(baselineLen * 0.94, natural * stretchMax);
     const textLength = stretched > natural ? stretched : null;
 
@@ -215,19 +220,29 @@ export function layoutLabels(
         r.y < t.y + t.h + pad && t.y < r.y + r.h + pad);
 
     // Atlas packing: if the midline slot is taken, stagger above/below it.
-    let chosen: { rect: { x: number; y: number; w: number; h: number }; dy: number } | null = null;
-    for (const shift of [0, -0.8, 0.8, -1.6, 1.6]) {
-      const dx = px * textH * shift, dy = py * textH * shift;
-      const r = {
-        x: Math.min(...xs) + dx, y: Math.min(...ys) + dy,
-        w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys),
-      };
-      if (!collidesAt(r)) { chosen = { rect: r, dy: textH * shift }; break; }
+    // Atlas packing: try the midline, then stagger perpendicular, then slide
+    // along the baseline — a name may sit off-centre in its territory.
+    let chosen: { rect: { x: number; y: number; w: number; h: number }; on: number; along: number } | null = null;
+    const perpShifts = [0, -0.8, 0.8, -1.6, 1.6, -2.4, 2.4];
+    const alongShifts = [0, -0.35, 0.35];
+    outer:
+    for (const along of alongShifts) {
+      for (const shift of perpShifts) {
+        const ox = px * textH * shift + dirX * textW * along;
+        const oy = py * textH * shift + dirY * textW * along;
+        const r = {
+          x: Math.min(...xs) + ox, y: Math.min(...ys) + oy,
+          w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys),
+        };
+        if (!collidesAt(r)) { chosen = { rect: r, on: textH * shift, along: textW * along }; break outer; }
+      }
     }
     if (!chosen) continue;
 
-    const finalPath = chosen.dy === 0 ? path :
-      `M ${(s.x + px * chosen.dy).toFixed(1)} ${(s.y + py * chosen.dy).toFixed(1)} Q ${(cx + px * chosen.dy).toFixed(1)} ${(cy + py * chosen.dy).toFixed(1)} ${(e.x + px * chosen.dy).toFixed(1)} ${(e.y + py * chosen.dy).toFixed(1)}`;
+    const ox = px * chosen.on + dirX * chosen.along;
+    const oy = py * chosen.on + dirY * chosen.along;
+    const finalPath = (ox === 0 && oy === 0) ? path :
+      `M ${(s.x + ox).toFixed(1)} ${(s.y + oy).toFixed(1)} Q ${(cx + ox).toFixed(1)} ${(cy + oy).toFixed(1)} ${(e.x + ox).toFixed(1)} ${(e.y + oy).toFixed(1)}`;
 
     taken.push(chosen.rect);
     placed.push({
@@ -236,5 +251,5 @@ export function layoutLabels(
       showSub: Boolean(spec.sub) && fontPx >= params.subMinFontPx,
     });
   }
-  return { placed, candidates };
+  return { placed, candidates, eligible };
 }

@@ -80,18 +80,35 @@ export function DioramaScene() {
     t.minFilter = THREE.LinearFilter;
     return t;
   }, []);
+  // Stage 1: the small albedo, nothing else in flight.
   useEffect(() => {
-    const loader = new THREE.TextureLoader();
-    const lo = loader.load(`${BASE}terrain/albedo_lo.jpg`, () => setAlbedo(lo));
+    const lo = new THREE.TextureLoader().load(`${BASE}terrain/albedo_lo.jpg`, () => setAlbedo(lo));
     lo.colorSpace = THREE.SRGBColorSpace;
     lo.anisotropy = 8;
+  }, []);
+
+  // Stage 3: 4K albedo then normals, only once the plate is up.
+  const baseReady = useApp(s => s.baseReady);
+  useEffect(() => {
+    if (!baseReady) return;
+    const loader = new THREE.TextureLoader();
     const hi = loader.load(`${BASE}terrain/albedo.jpg`, () => {
       hi.colorSpace = THREE.SRGBColorSpace;
       hi.anisotropy = 8;
       setAlbedo(hi);
+      const nm = loader.load(`${BASE}terrain/normal.jpg`, () => setNormalMap(nm));
     });
-    const nm = loader.load(`${BASE}terrain/normal.jpg`, () => setNormalMap(nm));
-  }, []);
+  }, [baseReady]);
+
+  // The test API is registered on a coarse dep list, so anything it reports
+  // must be read from a live ref — a captured value would report the state of
+  // whichever render last re-registered it.
+  const readyRef = useRef(false);
+  const setBaseReady = useApp(s => s.setBaseReady);
+  useEffect(() => {
+    readyRef.current = Boolean(terrainGeometry && albedo);
+    if (readyRef.current) setBaseReady();
+  }, [terrainGeometry, albedo, setBaseReady]);
 
   // Picking over the drapes, unchanged mechanics.
   const groupRef = useRef<THREE.Group>(null);
@@ -181,6 +198,8 @@ export function DioramaScene() {
       getLayer: () => useApp.getState().layer,
       setYear: (y) => useApp.getState().setYear(y),
       frameStats: () => ({ ...frameCounter.current }),
+      // True once the plate itself is on screen — the honest "map is here".
+      terrainReady: () => readyRef.current,
       profileStart: () => { profile.current.deltas = []; profile.current.on = true; },
       profileEnd: () => {
         profile.current.on = false;

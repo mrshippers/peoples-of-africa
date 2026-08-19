@@ -24,6 +24,7 @@ interface AppState {
   heritage: HeritageData | null;
   heightField: HeightField | null;
   vignettes: VignetteDef[] | null;
+  baseReady: boolean;   // plate + low-res albedo on screen
   layer: Layer;
   year: number;
   hoverId: string | null;
@@ -34,6 +35,7 @@ interface AppState {
   setHeritage(h: HeritageData): void;
   setHeightField(h: HeightField): void;
   setVignettes(v: VignetteDef[]): void;
+  setBaseReady(): void;
   setLayer(l: Layer): void;
   setYear(y: number): void;
   setHover(id: string | null): void;
@@ -46,6 +48,7 @@ export const useApp = create<AppState>((set, get) => ({
   heritage: null,
   heightField: null,
   vignettes: null,
+  baseReady: false,
   layer: "peoples",
   year: 1500,
   hoverId: null,
@@ -56,6 +59,7 @@ export const useApp = create<AppState>((set, get) => ({
   setHeritage: (heritage) => set({ heritage }),
   setHeightField: (heightField) => set({ heightField }),
   setVignettes: (vignettes) => set({ vignettes }),
+  setBaseReady: () => { if (!get().baseReady) set({ baseReady: true }); },
   setLayer: (layer) => set({ layer }),
   setYear: (year) => set({ year }),
   setHover: (hoverId) => {

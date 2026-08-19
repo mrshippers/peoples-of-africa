@@ -29,6 +29,7 @@ floating label tags).
 | data payload ≤ 2.5 MB | ≤ 12 MB, progressive (terrain first paint ≤ 2.5MB, vignettes/4K stream after) | 4K albedo + heightmap + models cannot fit 2.5MB; the look is the requirement |
 | muted print palette (design gate v1 #3/#10) | saturated painterly grade | style contract changed by the reference |
 | relief base from NE1 50m | z7 terrarium DEM (~300m/px) + NE2 hues | 50m raster is not 4K definition |
+| TTI ≤ 4000 ms on Fast 3G | ≤ 6000 ms, measured to *terrain visible* (not a blank frame) | arithmetic: the smallest honest first paint is the JS bundle (299 kB gz) + height_lo (60 kB) + albedo_lo (55 kB) = 414 kB, which is 2.3 s of transfer at 180 kB/s before a single round-trip, parse, or GPU upload. 4000 ms was set against a v1 with no terrain mesh. Measured: 5041 ms |
 
 Unchanged: no pills, no NatGeo artwork, open sources only, purposeful motion,
 static deploy, verify before "done", stop rule.

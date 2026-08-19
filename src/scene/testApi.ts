@@ -17,6 +17,7 @@ export interface PoaTestApi {
   ready: boolean;
   audit(): SceneAudit;
   pickAt(ndcX: number, ndcY: number): PickResult | null;
+  pickAtLonLat(lon: number, lat: number): PickResult | null;
   setZoom(distance: number): { distance: number; polar: number };
   lookAt(lat: number, lon: number): void;
   zoomLimits(): { min: number; max: number };
@@ -27,10 +28,12 @@ export interface PoaTestApi {
   visiblePolities(): string[];
   politiesForYear(year: number): string[];
   frameStats(): { count: number; last: number };
+  terrainReady(): boolean;
   profileStart(): void;
   profileEnd(): { frames: number; meanMs: number; p95Ms: number };
-  labelStats(): { visible: number; overlaps: number; candidates: number };
+  labelStats(): { visible: number; overlaps: number; candidates: number; eligible: number };
   vignetteAudit(): { id: string; inBbox: boolean; terrainOk: boolean; hasModel: boolean }[];
+  vignetteSizes(): { id: string; size: number[] | null }[];
   select(id: string | null): void;
   panelState(): { open: boolean; id: string | null; populatedInMs: number | null };
 }

@@ -79,7 +79,12 @@ export function mapToWorld(lon: number, lat: number, y: number): THREE.Vector3 {
 }
 
 /** Terrain mesh: plane displaced on the CPU from the height field. */
-export function buildTerrainGeometry(hf: HeightField, segX = 768, segZ = 724): THREE.BufferGeometry {
+export function buildTerrainGeometry(hf: HeightField, segX?: number, segZ?: number): THREE.BufferGeometry {
+  // Mesh density follows the height tier: the first plate is coarse so it
+  // appears immediately; the full map rebuilds it fine.
+  const fine = hf.width > 500;
+  segX = segX ?? (fine ? 512 : 176);
+  segZ = segZ ?? (fine ? 483 : 166);
   const geo = new THREE.PlaneGeometry(PLATE.W, PLATE.H, segX, segZ);
   geo.rotateX(-Math.PI / 2); // XZ plane, +y up; +z = south after rotation
   const pos = geo.getAttribute("position") as THREE.BufferAttribute;

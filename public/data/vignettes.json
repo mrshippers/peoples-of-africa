@@ -6,7 +6,7 @@
   "model": "giraffe",
   "lon": 34.9,
   "lat": -2.3,
-  "scale": 0.15,
+  "scale": 0.255,
   "rotY": 0.6,
   "needs": "land",
   "bbox": [
@@ -23,7 +23,7 @@
   "model": "elephant",
   "lon": 22.9,
   "lat": -19.3,
-  "scale": 0.14,
+  "scale": 0.238,
   "rotY": -0.4,
   "needs": "land",
   "bbox": [
@@ -40,7 +40,7 @@
   "model": "lion",
   "lon": 31.4,
   "lat": -24.0,
-  "scale": 0.11,
+  "scale": 0.187,
   "rotY": -1.2,
   "needs": "land",
   "bbox": [
@@ -57,7 +57,7 @@
   "model": "gorilla",
   "lon": 29.45,
   "lat": -1.45,
-  "scale": 0.1,
+  "scale": 0.17,
   "rotY": 1.4,
   "needs": "land",
   "bbox": [
@@ -74,7 +74,7 @@
   "model": "camel",
   "lon": 10.8,
   "lat": 18.4,
-  "scale": 0.12,
+  "scale": 0.204,
   "rotY": 2.4,
   "needs": "land",
   "bbox": [
@@ -89,16 +89,16 @@
   "label": "ETOSHA",
   "sub": "Equus quagga",
   "model": "zebra",
-  "lon": 16.4,
-  "lat": -18.8,
-  "scale": 0.11,
+  "lon": 15.9,
+  "lat": -19.1,
+  "scale": 0.187,
   "rotY": 0.2,
   "needs": "land",
   "bbox": [
-   14.8,
-   -19.8,
+   14.5,
+   -20.2,
    17.8,
-   -18.0
+   -17.8
   ]
  },
  {
@@ -108,7 +108,7 @@
   "model": "rhino",
   "lon": 32.0,
   "lat": -28.1,
-  "scale": 0.11,
+  "scale": 0.187,
   "rotY": -0.7,
   "needs": "land",
   "bbox": [
@@ -125,7 +125,7 @@
   "model": "sailboat",
   "lon": 39.8,
   "lat": -6.2,
-  "scale": 0.13,
+  "scale": 0.221,
   "rotY": -0.9,
   "needs": "water",
   "bbox": [
@@ -142,7 +142,7 @@
   "model": "@pyramids",
   "lon": 31.13,
   "lat": 29.98,
-  "scale": 0.13,
+  "scale": 0.221,
   "rotY": 0.35,
   "needs": "land",
   "bbox": [
@@ -159,7 +159,7 @@
   "model": "@baobabs",
   "lon": 44.42,
   "lat": -20.25,
-  "scale": 0.12,
+  "scale": 0.204,
   "rotY": 0.0,
   "needs": "land",
   "bbox": [
@@ -176,7 +176,7 @@
   "model": "palm",
   "lon": 25.52,
   "lat": 29.2,
-  "scale": 0.1,
+  "scale": 0.17,
   "rotY": 0.0,
   "needs": "land",
   "bbox": [

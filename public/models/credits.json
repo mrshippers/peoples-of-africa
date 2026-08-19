@@ -19,5 +19,33 @@
   "license": "CC0",
   "id": "A6cKJYFsIb",
   "bytes": 118032
+ },
+ "lion": {
+  "title": "Lion - Free 3D Model By Poly by Google - Poly Pizza",
+  "author": "Poly by Google",
+  "license": "CC-BY",
+  "id": "3XAJojWxSWz",
+  "bytes": 2015612
+ },
+ "gorilla": {
+  "title": "Gorilla - Free 3D Model By Poly by Google - Poly Pizza",
+  "author": "Poly by Google",
+  "license": "CC-BY",
+  "id": "bmfQ1j9CeO2",
+  "bytes": 41124
+ },
+ "camel": {
+  "title": "Camel - Free 3D Model By Poly by Google - Poly Pizza",
+  "author": "Poly by Google",
+  "license": "CC-BY",
+  "id": "7XeLogrxLad",
+  "bytes": 58772
+ },
+ "zebra": {
+  "title": "Zebra - Free 3D Model By Quaternius - Poly Pizza",
+  "author": "Quaternius",
+  "license": "CC0",
+  "id": "iclPBR6SBZ",
+  "bytes": 384288
  }
 }

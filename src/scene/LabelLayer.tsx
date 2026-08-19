@@ -41,6 +41,7 @@ export function LabelLayer() {
   const dirty = useRef(true);
   const lastPlaced = useRef<PlacedLabel[]>([]);
   const lastCandidates = useRef(0);
+  const lastEligible = useRef(0);
 
   const peopleSpecs = useMemo(
     () => (peoples ? peoples.map(computeLabelSpec) : []),
@@ -112,10 +113,11 @@ export function LabelLayer() {
       : { ...params.current, subMinFontPx: 12 };
     const dist = camera.position.distanceTo(new THREE.Vector3(0, 0, 0.2));
     const zoomT = (dist - ZOOM_MIN * 1.6) / (ZOOM_MAX * 0.8 - ZOOM_MIN * 1.6);
-    const { placed, candidates } = layoutLabels(
+    const { placed, candidates, eligible } = layoutLabels(
       activeSpecs(), projector, size.width, size.height, effParams, zoomT, tagRects);
     lastPlaced.current = placed;
     lastCandidates.current = candidates;
+    lastEligible.current = eligible;
     svg.setAttribute("viewBox", `0 0 ${size.width} ${size.height}`);
     svg.setAttribute("width", String(size.width));
     svg.setAttribute("height", String(size.height));
@@ -161,7 +163,7 @@ export function LabelLayer() {
     registerTestApi({
       labelStats: () => {
         const svg = svgRef.current;
-        if (!svg) return { visible: 0, overlaps: 0, candidates: 0 };
+        if (!svg) return { visible: 0, overlaps: 0, candidates: 0, eligible: 0 };
         // getBoundingClientRect misreports text-on-path in Chromium; measure
         // real glyph extents, skipping the empties it reports for some glyphs.
         const rects: { l: number; t: number; r: number; b: number }[] = [];
@@ -195,7 +197,10 @@ export function LabelLayer() {
                 a.t + inset < b.b - inset && b.t + inset < a.b - inset)
               overlaps++;
           }
-        return { visible: rects.length, overlaps, candidates: lastCandidates.current };
+        return {
+          visible: rects.length, overlaps,
+          candidates: lastCandidates.current, eligible: lastEligible.current,
+        };
       },
     });
     const w = window as unknown as Record<string, unknown>;

@@ -153,7 +153,7 @@ Image.fromarray((np.clip(rgb, 0, 1) * 255).astype(np.uint8)).save(
 
 # low-res albedo for progressive first paint
 Image.fromarray((np.clip(rgb, 0, 1) * 255).astype(np.uint8)).resize(
-    (1024, 964), Image.LANCZOS).save(os.path.join(OUT, "albedo_lo.jpg"), quality=80)
+    (640, 602), Image.LANCZOS).save(os.path.join(OUT, "albedo_lo.jpg"), quality=72)
 
 # ── packed heightmap (quarter res - matches the 1024-segment plate) ──
 hw, hh = W // 4, H // 4
@@ -164,6 +164,15 @@ packed[..., 0] = (enc >> 8).astype(np.uint8)
 packed[..., 1] = (enc & 0xFF).astype(np.uint8)
 Image.fromarray(packed).save(os.path.join(OUT, "height.png"), optimize=True)
 
+# Low-res height tier: the plate appears from this while the full map streams.
+lo_w, lo_h = hw // 5, hh // 5
+dem_lo = np.asarray(Image.fromarray(dem).resize((lo_w, lo_h), Image.BILINEAR))
+packed_lo = np.zeros((lo_h, lo_w, 3), np.uint8)
+enc_lo = np.clip(dem_lo + 11000.0, 0, 65535).astype(np.uint16)
+packed_lo[..., 0] = (enc_lo >> 8).astype(np.uint8)
+packed_lo[..., 1] = (enc_lo & 0xFF).astype(np.uint8)
+Image.fromarray(packed_lo).save(os.path.join(OUT, "height_lo.png"), optimize=True)
+
 # ── normal map of the exaggerated field (half res) ──
 z_small = np.asarray(Image.fromarray(zfield).resize((hw, hh), Image.BILINEAR))
 gy2, gx2 = np.gradient(z_small, 8.0 / hh, 8.5 / hw)
@@ -173,5 +182,5 @@ normal = np.stack([(nx * 0.5 + 0.5), (ny * 0.5 + 0.5), (nz * 0.5 + 0.5)], axis=-
 Image.fromarray((np.clip(normal, 0, 1) * 255).astype(np.uint8)).save(
     os.path.join(OUT, "normal.jpg"), quality=88)
 
-for f in ["albedo.jpg", "albedo_lo.jpg", "height.png", "normal.jpg"]:
+for f in ["albedo.jpg", "albedo_lo.jpg", "height.png", "height_lo.png", "normal.jpg"]:
     print(f, f"{os.path.getsize(os.path.join(OUT, f))/1e6:.2f} MB")

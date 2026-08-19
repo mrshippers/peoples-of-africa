@@ -12,19 +12,67 @@ import type { VignetteDef } from "../state";
 
 const BASE = import.meta.env.BASE_URL;
 
+/** Bounds from raw geometry — Box3.setFromObject measures SkinnedMesh via the
+ *  skeleton, which reports nonsense for these packs (a zebra the size of the
+ *  Congo). Geometry boxes transformed by world matrices are deterministic. */
+function measure(obj: THREE.Object3D): THREE.Box3 {
+  obj.updateWorldMatrix(true, true);
+  const box = new THREE.Box3();
+  obj.traverse(o => {
+    const g = (o as THREE.Mesh).geometry as THREE.BufferGeometry | undefined;
+    if (!g?.attributes?.position) return;
+    if (!g.boundingBox) g.computeBoundingBox();
+    if (g.boundingBox) box.union(g.boundingBox.clone().applyMatrix4(o.matrixWorld));
+  });
+  return box;
+}
+
+/** Replace SkinnedMesh with a plain Mesh of the same bind-pose geometry.
+ *  These packs ship rigs whose bone transforms scale the rendered result far
+ *  beyond the geometry — the zebra rendered the size of the Congo while its
+ *  bounding box measured centimetres. We only ever draw a static pose. */
+function deskin(root: THREE.Object3D): THREE.Object3D {
+  const swaps: [THREE.Object3D, THREE.Object3D][] = [];
+  root.traverse(o => {
+    if ((o as THREE.SkinnedMesh).isSkinnedMesh) {
+      const sm = o as THREE.SkinnedMesh;
+      const m = new THREE.Mesh(sm.geometry, sm.material);
+      m.position.copy(sm.position);
+      m.quaternion.copy(sm.quaternion);
+      m.scale.copy(sm.scale);
+      swaps.push([sm, m]);
+    }
+  });
+  for (const [old, next] of swaps) {
+    const parent = old.parent;
+    if (parent) { parent.remove(old); parent.add(next); }
+  }
+  // Bones left behind carry no geometry; drop them so nothing scales the pose.
+  const bones: THREE.Object3D[] = [];
+  root.traverse(o => { if ((o as THREE.Bone).isBone) bones.push(o); });
+  for (const b of bones) b.parent?.remove(b);
+  return root;
+}
+
 function normalized(scene: THREE.Object3D, targetHeight: number): THREE.Object3D {
-  const box = new THREE.Box3().setFromObject(scene);
+  // Scale a WRAPPER, never the model root: several of these GLBs carry their
+  // own root scale, and overwriting it made them continent-sized.
+  const inner = new THREE.Group();
+  inner.add(deskin(scene));
+  const box = measure(inner);
   const size = new THREE.Vector3();
   box.getSize(size);
-  const s = targetHeight / Math.max(1e-6, size.y);
-  const root = new THREE.Group();
-  scene.scale.setScalar(s);
-  // sit on the ground: lift so the bbox bottom lands at y=0
-  scene.position.y = -box.min.y * s;
-  scene.position.x = -(box.min.x + size.x / 2) * s;
-  scene.position.z = -(box.min.z + size.z / 2) * s;
-  root.add(scene);
-  return root;
+  if (!Number.isFinite(size.y) || size.y <= 1e-6) return new THREE.Group();
+  const s = targetHeight / size.y;
+  inner.scale.setScalar(s);
+  inner.position.set(
+    -(box.min.x + size.x / 2) * s,
+    -box.min.y * s,
+    -(box.min.z + size.z / 2) * s,
+  );
+  const outer = new THREE.Group();
+  outer.add(inner);
+  return outer;
 }
 
 function pyramids(scale: number): THREE.Object3D {
@@ -65,11 +113,14 @@ export function Vignettes() {
   const setVignettes = useApp(s => s.setVignettes);
   const [models, setModels] = useState<Map<string, THREE.Object3D>>(new Map());
 
+  // Models are the last thing to stream: they must not compete with the plate.
+  const baseReady = useApp(s => s.baseReady);
   useEffect(() => {
+    if (!baseReady) return;
     fetch(`${BASE}data/vignettes.json`)
       .then(r => r.json())
       .then((v: VignetteDef[]) => setVignettes(v));
-  }, [setVignettes]);
+  }, [setVignettes, baseReady]);
 
   useEffect(() => {
     if (!vignettes) return;
@@ -104,6 +155,12 @@ export function Vignettes() {
   useEffect(() => {
     if (!vignettes || !heightField) return;
     registerTestApi({
+      vignetteSizes: () => placed.map(({ v, object }) => {
+        if (!object) return { id: v.id, size: null };
+        const b = measure(object);
+        const sz = new THREE.Vector3(); b.getSize(sz);
+        return { id: v.id, size: [+sz.x.toFixed(3), +sz.y.toFixed(3), +sz.z.toFixed(3)] };
+      }),
       vignetteAudit: () => (vignettes.map(v => {
         const h = heightField.sample(v.lon, v.lat);
         const terrainOk = v.needs === "water" ? h < 0 : h >= 0;

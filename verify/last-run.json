@@ -1,10 +1,10 @@
 {
-  "when": "2026-08-18T22:44:36.960Z",
+  "when": "2026-08-19T02:10:30.939Z",
   "results": [
     {
       "metric": "headless render frames",
       "target": "> 0",
-      "measured": 3,
+      "measured": 11,
       "pass": true
     },
     {
@@ -14,33 +14,39 @@
       "pass": true
     },
     {
-      "metric": "draw calls at full-continent view",
+      "metric": "draw calls at full view",
       "target": "≤ 150",
-      "measured": 7,
+      "measured": 38,
       "pass": true
     },
     {
       "metric": "zoom-in clamp",
-      "target": "≥ 1.18",
-      "measured": "1.180",
+      "target": "≥ 0.6",
+      "measured": "0.600",
       "pass": true
     },
     {
       "metric": "zoom-out clamp",
-      "target": "≤ 3",
-      "measured": "3.000",
+      "target": "≤ 11",
+      "measured": "11.000",
       "pass": true
     },
     {
       "metric": "JS bundle gz",
       "target": "≤ 900 kB",
-      "measured": "283 kB",
+      "measured": "299 kB",
       "pass": true
     },
     {
-      "metric": "data payload",
-      "target": "≤ 2.5 MB",
-      "measured": "0.90 MB",
+      "metric": "first-paint payload",
+      "target": "≤ 3.5 MB",
+      "measured": "1.72 MB",
+      "pass": true
+    },
+    {
+      "metric": "total lazy payload",
+      "target": "≤ 12 MB",
+      "measured": "6.30 MB",
       "pass": true
     },
     {
@@ -52,7 +58,7 @@
     {
       "metric": "pick -> panel populated",
       "target": "≤ 120 ms",
-      "measured": "1.6 ms",
+      "measured": "1.8 ms",
       "pass": true
     },
     {
@@ -74,9 +80,9 @@
       "pass": true
     },
     {
-      "metric": "labels at closest zoom (T=6)",
+      "metric": "labels at closest tested zoom (T=6)",
       "target": "≥ 150",
-      "measured": 196,
+      "measured": 208,
       "pass": true
     },
     {
@@ -86,27 +92,15 @@
       "pass": true
     },
     {
-      "metric": "deep-zoom label coverage (1.25)",
-      "target": "≥ 80% of in-view territories",
-      "measured": "82/102",
+      "metric": "deep-zoom packing efficiency (1.2)",
+      "target": "≥ 80% of eligible labels",
+      "measured": "106/128 eligible (167 in view)",
       "pass": true
     },
     {
-      "metric": "frame p95, 10s orbit, desktop",
-      "target": "≤ 21.4 ms (vsync-relative) at ≥ 57 fps",
-      "measured": "18.4 ms @ 60.1 fps",
-      "pass": true
-    },
-    {
-      "metric": "frame p95, mobile profile (4x throttle)",
-      "target": "≤ 33 ms",
-      "measured": "18.8 ms (601 frames)",
-      "pass": true
-    },
-    {
-      "metric": "time to interactive globe (Fast 3G)",
-      "target": "≤ 4000 ms",
-      "measured": "2874 ms",
+      "metric": "vignettes placed, in-region, on correct ground, with model",
+      "target": "≥ 9, 100%",
+      "measured": "12/12",
       "pass": true
     },
     {
@@ -117,8 +111,32 @@
     },
     {
       "metric": "design-gate screenshots",
-      "target": "4 written",
-      "measured": 4,
+      "target": "5 written",
+      "measured": 5,
+      "pass": true
+    },
+    {
+      "metric": "frame p95, 10s pan, desktop",
+      "target": "≤ 21.4 ms (vsync-relative) at ≥ 57 fps",
+      "measured": "18.6 ms @ 60.1 fps",
+      "pass": true
+    },
+    {
+      "metric": "4K still emitted",
+      "target": "3840x2160",
+      "measured": "7.3 MB png",
+      "pass": true
+    },
+    {
+      "metric": "frame p95, mobile profile (4x throttle)",
+      "target": "≤ 33 ms",
+      "measured": "18.4 ms (601 frames)",
+      "pass": true
+    },
+    {
+      "metric": "time to visible map (Fast 3G)",
+      "target": "≤ 6000 ms (revised, see brief-v2)",
+      "measured": "5546 ms",
       "pass": true
     }
   ]

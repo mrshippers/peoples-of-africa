@@ -7,6 +7,7 @@ import type { FamilyMeshData, GroupRange } from "./build";
 import { registerTestApi } from "./testApi";
 import type { PickResult } from "./testApi";
 import { useApp } from "../state";
+import { mapToWorld } from "./terrain";
 
 function rangeFor(ranges: GroupRange[], faceIndex: number): GroupRange | null {
   let lo = 0, hi = ranges.length - 1;
@@ -98,7 +99,20 @@ export function attachPicking(
   canvas.addEventListener("pointerdown", onDown);
   canvas.addEventListener("pointerup", onUp);
 
-  registerTestApi({ pickAt: (x, y) => pick(x, y) });
+  registerTestApi({
+    pickAt: (x, y) => pick(x, y),
+    // Pick at the screen position a map point projects to. On a tilted plate
+    // the view centre is not the look-at point, so centre-screen picking would
+    // test the wrong pixel.
+    pickAtLonLat: (lon: number, lat: number) => {
+      const hf = useApp.getState().heightField;
+      if (!hf) return null;
+      const world = mapToWorld(lon, lat, Math.max(0, hf.worldY(lon, lat)) + 0.008);
+      const ndc = world.clone().project(camera);
+      if (ndc.z > 1 || ndc.z < -1) return null;
+      return pick(ndc.x, ndc.y);
+    },
+  });
 
   return () => {
     canvas.removeEventListener("pointermove", onMove);

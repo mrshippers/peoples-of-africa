@@ -89,13 +89,15 @@ for name, query in WANTED:
     # The title must actually name the thing — "lion" once returned a
     # clownfish. Then prefer Quaternius, CC0, small.
     word = query.split()[0].lower()
+    import re as _re
+    whole = lambda t: bool(_re.search(rf"\b{word}\b", t.lower()))
     infos.sort(key=lambda i: (
-        0 if word in i["title"].lower() else 2,
+        0 if whole(i["title"]) else 2,
         0 if i["author"].lower() == "quaternius" else 1,
         0 if i["license"] == "CC0" else 1,
         i["tris"] or 10**9,
     ))
-    if word not in infos[0]["title"].lower():
+    if not whole(infos[0]["title"]):
         print(f"{name}: no title match, skipping ({infos[0]['title']!r})", file=sys.stderr)
         continue
     best = infos[0]
