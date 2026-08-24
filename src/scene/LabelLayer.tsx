@@ -80,32 +80,9 @@ export function LabelLayer() {
       return { x: (ndc.x + 1) / 2 * size.width, y: (1 - ndc.y) / 2 * size.height };
     };
 
-    // Vignette tags first: they own their spots; cartographic labels avoid them.
-    const vigs = useApp.getState().vignettes ?? [];
-    const tagParts: string[] = [];
+    // Vignette tags moved to VignetteTags (hover-revealed, own overlay), so
+    // the cartographic layout no longer reserves space for them.
     const tagRects: { x: number; y: number; w: number; h: number }[] = [];
-    for (const v of vigs) {
-      const p = projector(v.lon, v.lat);
-      if (!p || p.x < 20 || p.x > size.width - 20 || p.y < 30 || p.y > size.height - 20) continue;
-      const wMain = v.label.length * 6.4 + 18;
-      const wSub = v.sub.length * 5.0 + 18;
-      const w = Math.max(wMain, wSub);
-      const h = 30;
-      let bx = Math.min(p.x + 16, size.width - w - 10);
-      let by = Math.max(10, p.y - 40);
-      // tags dodge each other by stepping upward
-      const hits = (x: number, y: number) => tagRects.some(t =>
-        x < t.x + t.w + 4 && t.x < x + w + 4 && y < t.y + t.h + 4 && t.y < y + h + 4);
-      for (let tries = 0; tries < 5 && hits(bx, by); tries++) by -= h + 12;
-      tagRects.push({ x: bx - 4, y: by - 4, w: w + 8, h: h + 8 });
-      tagParts.push(
-        `<line class="tag-lead" x1="${p.x.toFixed(1)}" y1="${p.y.toFixed(1)}" x2="${bx.toFixed(1)}" y2="${(by + h).toFixed(1)}"/>`,
-        `<circle class="tag-dot" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.4"/>`,
-        `<rect class="tag-box" x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${w.toFixed(0)}" height="${h}"/>`,
-        `<text class="tag-title" x="${(bx + 9).toFixed(1)}" y="${(by + 13).toFixed(1)}">${v.label}</text>`,
-        `<text class="tag-sub" x="${(bx + 9).toFixed(1)}" y="${(by + 24).toFixed(1)}">${v.sub}</text>`,
-      );
-    }
     // Heritage sub-labels are the polity dates - show them at smaller type
     // than the peoples' language micro-labels.
     const effParams = layer === "peoples"
@@ -137,7 +114,7 @@ export function LabelLayer() {
           `<text class="lbl-sub" font-size="${Math.max(8, p.fontPx * 0.32).toFixed(1)}" transform="translate(0 ${(p.fontPx * 0.95).toFixed(1)})"><textPath href="#lp-${p.spec.id}" startOffset="50%">${p.spec.sub}</textPath></text>`,
         );
     }
-    svg.innerHTML = parts.join("") + tagParts.join("");
+    svg.innerHTML = parts.join("");
     svg.classList.add("is-settled");
     dirty.current = false;
   };

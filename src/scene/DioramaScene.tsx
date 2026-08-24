@@ -20,6 +20,7 @@ import { LabelLayer } from "./LabelLayer";
 import { Highlight } from "./Highlight";
 import { Ocean } from "./Ocean";
 import { Vignettes } from "./Vignettes";
+import { VignetteTags } from "./VignetteTags";
 
 export const ZOOM_MIN = 0.6;
 export const ZOOM_MAX = 11;
@@ -300,6 +301,7 @@ export function DioramaScene() {
       <HeritageLayer />
       <LabelLayer />
       <Vignettes />
+      <VignetteTags />
     </>
   );
 }

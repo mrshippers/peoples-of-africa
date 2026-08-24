@@ -2,12 +2,14 @@
 // procedural set-pieces (Giza pyramids, Malagasy baobabs). Deliberately
 // oversized, like the miniatures on a game map. Tags render in LabelLayer.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three-stdlib";
+import { useFrame } from "@react-three/fiber";
 import { mapToWorld } from "./terrain";
 import { useApp } from "../state";
 import { registerTestApi } from "./testApi";
+import { vignetteRegionMap } from "./vignetteRegions";
 import type { VignetteDef } from "../state";
 
 const BASE = import.meta.env.BASE_URL;
@@ -107,10 +109,24 @@ function baobabs(scale: number): THREE.Object3D {
   return g;
 }
 
+/** Ease a freshly revealed vignette up from small; unmount is instant. */
+function Pop({ position, children }: { position: THREE.Vector3; children: React.ReactNode }) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame(() => {
+    const g = ref.current;
+    if (!g) return;
+    g.scale.setScalar(Math.min(1, g.scale.x + (1 - g.scale.x) * 0.22 + 0.001));
+  });
+  return <group ref={ref} position={position} scale={0.05}>{children}</group>;
+}
+
 export function Vignettes() {
   const heightField = useApp(s => s.heightField);
   const vignettes = useApp(s => s.vignettes);
   const setVignettes = useApp(s => s.setVignettes);
+  const peoples = useApp(s => s.peoples);
+  const hoverId = useApp(s => s.hoverId);
+  const selectedId = useApp(s => s.selectedId);
   const [models, setModels] = useState<Map<string, THREE.Object3D>>(new Map());
 
   // Models are the last thing to stream: they must not compete with the plate.
@@ -171,12 +187,26 @@ export function Vignettes() {
     } as never);
   }, [vignettes, heightField, models]);
 
+  // Vignettes reveal on hover: only the hovered (or selected) region's
+  // miniatures render, so the plate reads as cartography until you explore.
+  const regionOf = useMemo(
+    () => (peoples && vignettes ? vignetteRegionMap(peoples, vignettes) : null),
+    [peoples, vignettes],
+  );
+
   return (
     <group>
-      {placed.map(({ v, pos, object }) => object && (
-        <primitive key={v.id} object={object} position={pos}
-          rotation={[0, v.rotY, 0]} userData={{ layer: "vignette" }} />
-      ))}
+      {placed.map(({ v, pos, object }) => {
+        if (!object) return null;
+        const r = regionOf?.get(v.id);
+        if (r == null || (r !== hoverId && r !== selectedId)) return null;
+        return (
+          <Pop key={v.id} position={pos}>
+            <primitive object={object}
+              rotation={[0, v.rotY, 0]} userData={{ layer: "vignette" }} />
+          </Pop>
+        );
+      })}
     </group>
   );
 }
