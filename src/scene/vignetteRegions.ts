@@ -30,31 +30,43 @@ function contains(f: PeopleFeature, lon: number, lat: number): boolean {
   });
 }
 
-function nearestId(fs: PeopleFeature[], lon: number, lat: number): string | null {
-  let best: string | null = null, bd = Infinity;
-  for (const f of fs)
-    for (const rings of polys(f))
-      for (const [x, y] of rings[0] ?? []) {
-        const d = (x - lon) ** 2 + (y - lat) ** 2;
-        if (d < bd) { bd = d; best = f.properties.id; }
-      }
-  return best;
+/** Degrees within which a region counts as "near" a vignette. Wide enough
+ *  that exploring the area around a landmark reveals it; 12 vignettes across
+ *  835 regions would otherwise almost never fire. */
+const NEAR_DEG = 4;
+
+function minDist2(f: PeopleFeature, lon: number, lat: number): number {
+  let bd = Infinity;
+  for (const rings of polys(f))
+    for (const [x, y] of rings[0] ?? []) {
+      const d = (x - lon) ** 2 + (y - lat) ** 2;
+      if (d < bd) bd = d;
+    }
+  return bd;
 }
 
-const cache = new WeakMap<object, Map<string, string>>();
+const cache = new WeakMap<object, Map<string, Set<string>>>();
 
-/** vignette id -> owning region id (containing polygon, else nearest). */
+/** vignette id -> region ids that reveal it (the containing polygon plus any
+ *  region with a boundary vertex within NEAR_DEG; nearest as last resort). */
 export function vignetteRegionMap(
   peoples: PeopleFeature[],
   vignettes: VignetteDef[],
-): Map<string, string> {
+): Map<string, Set<string>> {
   const hit = cache.get(vignettes);
   if (hit) return hit;
-  const map = new Map<string, string>();
+  const map = new Map<string, Set<string>>();
+  const near2 = NEAR_DEG * NEAR_DEG;
   for (const v of vignettes) {
-    const owner = peoples.find(f => contains(f, v.lon, v.lat))?.properties.id
-      ?? nearestId(peoples, v.lon, v.lat);
-    if (owner) map.set(v.id, owner);
+    const owners = new Set<string>();
+    let nearest: string | null = null, nd = Infinity;
+    for (const f of peoples) {
+      const d = minDist2(f, v.lon, v.lat);
+      if (d < nd) { nd = d; nearest = f.properties.id; }
+      if (d <= near2 || contains(f, v.lon, v.lat)) owners.add(f.properties.id);
+    }
+    if (!owners.size && nearest) owners.add(nearest);
+    map.set(v.id, owners);
   }
   cache.set(vignettes, map);
   return map;
