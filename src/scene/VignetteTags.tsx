@@ -34,8 +34,9 @@ export function VignetteTags() {
   const active = useMemo(() => {
     if (!vignettes || !regionOf) return [];
     return vignettes.filter(v => {
-      const r = regionOf.get(v.id);
-      return r != null && (r === hoverId || r === selectedId);
+      const owners = regionOf.get(v.id);
+      return owners != null && ((hoverId != null && owners.has(hoverId))
+        || (selectedId != null && owners.has(selectedId)));
     });
   }, [vignettes, regionOf, hoverId, selectedId]);
 

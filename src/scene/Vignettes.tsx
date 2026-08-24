@@ -198,8 +198,10 @@ export function Vignettes() {
     <group>
       {placed.map(({ v, pos, object }) => {
         if (!object) return null;
-        const r = regionOf?.get(v.id);
-        if (r == null || (r !== hoverId && r !== selectedId)) return null;
+        const owners = regionOf?.get(v.id);
+        const shown = owners != null && ((hoverId != null && owners.has(hoverId))
+          || (selectedId != null && owners.has(selectedId)));
+        if (!shown) return null;
         return (
           <Pop key={v.id} position={pos}>
             <primitive object={object}
